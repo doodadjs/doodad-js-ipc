@@ -1,14 +1,15 @@
 {
   "name": "doodad-js-ipc",
-  "version": "0.1.0",
-  "description": "\"doodad-js\" IPC/RPC",
+  "version": "0.1.1",
+  "description": "\"doodad-js\" IPC/RPC (alpha)",
   "homepage": "https://sourceforge.net/projects/doodad-js/",
   "main": "index.js",
   "files": [
     "src",
-	"Server_Ipc.min.js",
+    "Server_Ipc.min.js",
     "index.js",
-	"LICENSE"
+    "README",
+    "LICENSE"
   ],
   "scripts": {
     "prepublish": "node -r \"doodad-js-make/make.js\" . make",
@@ -17,7 +18,8 @@
   "keywords": [
     "doodad-js",
     "ipc",
-	"rpc"
+    "rpc",
+    "server"
   ],
   "author": "Claude Petit <doodadjs@gmail.com> (https://sourceforge.net/projects/doodad-js/)",
   "license": "Apache-2.0",
@@ -26,11 +28,11 @@
   },
   "repository": {
     "type": "svn",
-    "url": "https://svn.code.sf.net/p/doodad-js/code/node_modules/doodad-js-ipc/"
+    "url": "https://svn.code.sf.net/p/doodad-js/code/trunk/node_modules/doodad-js-ipc/"
   },
   "bugs": {
-    "url" : "https://sourceforge.net/p/doodad-js/tickets/",
-    "email" : "doodadjs@gmail.com"
+    "url": "https://sourceforge.net/p/doodad-js/tickets/",
+    "email": "doodadjs@gmail.com"
   },
   "dependencies": {
     "doodad-js": "^1.0.0",
