@@ -1,5 +1,5 @@
-//! REPLACE_BY("// Copyright 2015 Claude Petit, licensed under Apache License version 2.0\n")
-// dOOdad - Object-oriented programming framework with some extras
+//! REPLACE_BY("// Copyright 2016 Claude Petit, licensed under Apache License version 2.0\n")
+// dOOdad - Object-oriented programming framework
 // File: Server_Ipc.js - Server tools
 // Project home: https://sourceforge.net/projects/doodad-js/
 // Trunk: svn checkout svn://svn.code.sf.net/p/doodad-js/code/trunk doodad-js-code
@@ -8,7 +8,7 @@
 // Note: I'm still in alpha-beta stage, so expect to find some bugs or incomplete parts !
 // License: Apache V2
 //
-//	Copyright 2015 Claude Petit
+//	Copyright 2016 Claude Petit
 //
 //	Licensed under the Apache License, Version 2.0 (the "License");
 //	you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@
 	const global = this;
 
 	var exports = {};
-	if (global.process) {
+	if (typeof process === 'object') {
 		module.exports = exports;
 	};
 	
@@ -35,9 +35,21 @@
 		DD_MODULES = (DD_MODULES || {});
 		DD_MODULES['Doodad.Server.Ipc'] = {
 			type: null,
-			version: '0d',
+			version: '0.2d',
 			namespaces: ['Interfaces', 'MixIns', 'Extenders'],
-			dependencies: ['Doodad.Types', 'Doodad.Tools', 'Doodad', 'Doodad.IO', 'Doodad.Server'],
+			dependencies: [
+				'Doodad.Types', 
+				'Doodad.Tools', 
+				'Doodad', 
+				{
+					name: 'Doodad.IO',
+					version: '0.2',
+				}, 
+				{
+					name: 'Doodad.Server',
+					version: '0.2',
+				}, 
+			],
 
 			create: function create(root, /*optional*/_options) {
 				"use strict";
@@ -124,8 +136,8 @@
 							method: method,
 							args: args,
 							session : session,
+							customData: {},
 						});
-						this.customData = {};
 					}),
 				})));
 
@@ -236,8 +248,11 @@
 					
 					create: doodad.OVERRIDE(function create(innerRequest, server, method, /*optional*/args, /*optional*/session) {
 						this._super(server, method, args, session);
-						this.setAttribute('innerRequest', innerRequest);
-						this.customData = {};
+
+						this.setAttributes({
+							innerRequest: innerRequest,
+							customData: {},
+						});
 					}),
 					
 					end: doodad.OVERRIDE(function end(/*optional*/result) {
@@ -478,8 +493,8 @@
 		return DD_MODULES;
 	};
 	
-	if (!global.process) {
+	if (typeof process !== 'object') {
 		// <PRB> export/import are not yet supported in browsers
 		global.DD_MODULES = exports.add(global.DD_MODULES);
 	};
-})();
+}).call((typeof global !== 'undefined') ? global : ((typeof window !== 'undefined') ? window : this));
