@@ -57,7 +57,7 @@ Then load 'doodad-js-ipc' and its dependencies :
         // your code here...
     };
     
-    namespaces.loadNamespaces(startup, false, null, modules);
+    namespaces.loadNamespaces(modules, startup);
 ```
 
 ## Example

@@ -35,19 +35,22 @@
 		DD_MODULES = (DD_MODULES || {});
 		DD_MODULES['Doodad.Server.Ipc'] = {
 			type: null,
-			version: '0.2d',
+			version: '0.2.0d',
 			namespaces: ['Interfaces', 'MixIns', 'Extenders'],
 			dependencies: [
 				'Doodad.Types', 
 				'Doodad.Tools', 
-				'Doodad', 
+				{
+					name: 'Doodad',
+					version: '2.0.0',
+				}, 
 				{
 					name: 'Doodad.IO',
-					version: '0.2',
+					version: '0.4.0',
 				}, 
 				{
 					name: 'Doodad.Server',
-					version: '0.2',
+					version: '0.3.0',
 				}, 
 			],
 
@@ -102,7 +105,7 @@
 					if (!type) {
 						return false;
 					};
-					const attrs = types.invoke(type, 'getAttribute', ['$__ATTRIBUTES']);
+					const attrs = types.getAttribute(type, '$__ATTRIBUTES');
 					if (!types.hasKey(attrs, name)) {
 						return false;
 					};
@@ -131,7 +134,7 @@
 							root.DD_ASSERT(types.isNothing(session) || (session instanceof server.Session), "Invalid session.");
 						};
 						this._super();
-						this.setAttributes({
+						types.setAttributes(this, {
 							server: server,
 							method: method,
 							args: args,
@@ -236,7 +239,7 @@
 							root.DD_ASSERT(types._implements(service, ipcMixIns.Service), "Invalid service.");
 						};
 						this._super();
-						this.setAttribute('service', service);
+						types.setAttribute(this, 'service', service);
 					}),
 				})));
 				
@@ -249,7 +252,7 @@
 					create: doodad.OVERRIDE(function create(innerRequest, server, method, /*optional*/args, /*optional*/session) {
 						this._super(server, method, args, session);
 
-						this.setAttributes({
+						types.setAttributes(this, {
 							innerRequest: innerRequest,
 							customData: {},
 						});
