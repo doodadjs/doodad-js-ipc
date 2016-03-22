@@ -35,18 +35,18 @@
 		DD_MODULES = (DD_MODULES || {});
 		DD_MODULES['Doodad.Server.Ipc'] = {
 			type: null,
-			version: '0.2.0d',
+			version: '0.2.2a',
 			namespaces: ['Interfaces', 'MixIns', 'Extenders'],
 			dependencies: [
 				'Doodad.Types', 
 				'Doodad.Tools', 
 				{
 					name: 'Doodad',
-					version: '2.0.0',
+					version: '2.2.0',
 				}, 
 				{
 					name: 'Doodad.IO',
-					version: '0.4.0',
+					version: '1.0.0',
 				}, 
 				{
 					name: 'Doodad.Server',
