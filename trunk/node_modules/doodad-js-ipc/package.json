@@ -1,6 +1,7 @@
 {
   "name": "doodad-js-ipc",
-  "version": "0.2.2",
+  "version": "0.3.0",
+  "stage": "a",
   "description": "doodad-js IPC/RPC (alpha)",
   "homepage": "https://sourceforge.net/projects/doodad-js/",
   "main": "index.js",
