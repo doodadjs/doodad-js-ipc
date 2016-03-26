@@ -35,24 +35,9 @@
 		DD_MODULES = (DD_MODULES || {});
 		DD_MODULES['Doodad.Server.Ipc'] = {
 			type: null,
-			version: '0.2.2a',
+			//! INSERT("version:'" + VERSION('doodad-js-ipc') + "',")
 			namespaces: ['Interfaces', 'MixIns', 'Extenders'],
-			dependencies: [
-				'Doodad.Types', 
-				'Doodad.Tools', 
-				{
-					name: 'Doodad',
-					version: '2.2.0',
-				}, 
-				{
-					name: 'Doodad.IO',
-					version: '1.0.0',
-				}, 
-				{
-					name: 'Doodad.Server',
-					version: '0.3.0',
-				}, 
-			],
+			dependencies: null,
 
 			create: function create(root, /*optional*/_options) {
 				"use strict";
