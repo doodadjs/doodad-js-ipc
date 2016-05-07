@@ -325,10 +325,10 @@
 					}),
 					
 					getSessionFromToken: doodad.PROTECTED(function getSessionFromToken(svcToken) {
-						// TODO: Implement
+						// TODO: Implement sessions
 					}),
 					createSession: doodad.PROTECTED(function createSession() {
-						// TODO: Implement
+						// TODO: Implement sessions
 					}),
 					
 					
@@ -342,7 +342,7 @@
 						if (!svc) {
 							svc = namespaces.getNamespace(svcName);
 							if (!types._implements(svc, ipcMixIns.Service)) {
-								throw new types.TypeError(tools.format("Unknown service : '~0~'.", [svcName]));
+								throw new types.TypeError("Unknown service : '~0~'.", [svcName]);
 							};
 							if (types.isType(svc)) {
 								svc = svc.$createInstance();
@@ -351,7 +351,7 @@
 							svc = this.registerService(svcName, svc);
 						};
 						if (types.get(options, 'version', 0) !== svc.obj.version) {
-							throw new types.TypeError(tools.format("Invalid version. Service version is '~0~'.", [svc.version]));
+							throw new types.TypeError("Invalid version. Service version is '~0~'.", [svc.version]);
 						};
 						let session = null;
 						if (svc.hasSessions) {
@@ -431,6 +431,9 @@
 
 				
 				ipc.RequestCallback = types.setPrototypeOf(function(request, obj, fn) {
+					if (fn instanceof types.Callback) {
+						return fn;
+					};
 					if (types.isString(fn)) {
 						fn = obj[fn];
 					};
