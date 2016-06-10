@@ -68,12 +68,12 @@
 				//};
 
 				
-				ipc.Error = types.createErrorType('IpcError', types.Error);
-				ipc.InvalidRequest = types.createErrorType('InvalidRequest', ipc.Error, function(message, params) {
+				ipc.Error = types.createErrorType('IpcError', types.ScriptInterruptedError);
+				ipc.InvalidRequest = types.createErrorType('InvalidRequest', ipc.Error, function(/*optional*/message, /*optional*/params) {
 					ipc.Error.call(this, message || "Invalid request.", params);
 				});
-				ipc.MethodNotCallable = types.createErrorType('MethodNotCallable', ipc.Error, function(message, params) {
-					ipc.Error.call(this, message || "Method '~0~.~1~' is not callable or doesn't exist.", params);
+				ipc.MethodNotCallable = types.createErrorType('MethodNotCallable', ipc.Error, function(/*optional*/message, /*optional*/params) {
+					ipc.Error.call(this, message || "Method '~1~' of '~0~' is not callable or doesn't exist.", params);
 				});
 				
 				ipcExtenders.REGISTER(extenders.Method.$inherit({
@@ -90,20 +90,15 @@
 				};
 				
 				ipc.isCallable = function isCallable(obj, name) {
-					const isType = types.isType(obj),
-						type = types.getType(obj);
-					if (!type) {
+					const attr = doodad.getAttributeDescriptor(obj, name);
+					if (!attr) {
 						return false;
 					};
-					const attrs = types.getAttribute(type, '$__ATTRIBUTES');
-					if (!types.hasKey(attrs, name)) {
-						return false;
-					};
-					const attr = attrs[name],
-						extender = attr.EXTENDER;
+					const extender = attr.EXTENDER;
 					if (!types.isLike(extender, ipcExtenders.Callable)) {
 						return false;
 					};
+					const isType = types.isType(obj);
 					return ((isType && extender.isType) || (!isType && extender.isInstance));
 				};
 					
@@ -129,7 +124,7 @@
 							method: method,
 							args: args,
 							session : session,
-							customData: {},
+							data: {},
 						});
 					}),
 				})));
@@ -150,10 +145,10 @@
 						if (root.DD_ASSERT) {
 							root.DD_ASSERT(request instanceof ipc.Request, "Invalid request.");
 						};
-						if (!ipc.isCallable(this.__host, request.method)) {
-							throw new ipc.MethodNotCallable(null, [types.getTypeName(this.__host), request.method]);
+						if (!ipc.isCallable(this[doodad.HostSymbol], request.method)) {
+							throw new ipc.MethodNotCallable(null, [types.getTypeName(this[doodad.HostSymbol]), request.method]);
 						};
-						return types.invoke(this.__host, request.method, types.append([request], request.args));
+						return types.invoke(this[doodad.HostSymbol], request.method, types.append([request], request.args));
 					}),
 				}))));
 				
@@ -244,7 +239,7 @@
 
 						types.setAttributes(this, {
 							innerRequest: innerRequest,
-							customData: {},
+							data: {},
 						});
 					}),
 					
@@ -282,13 +277,13 @@
 					registerService: doodad.PROTECTED(function registerService(svcName, svc) {
 						const servicesByName = this.__servicesByName,
 							servicesById = this.__servicesById;
-						if (types.hasKey(servicesByName, svcName)) {
+						if (types.has(servicesByName, svcName)) {
 							return false;
 						};
 						let id;
 						do {
 							id = tools.generateUUID();
-						} while (types.hasKey(servicesById, id));
+						} while (types.has(servicesById, id));
 						svc = {
 							id: id,
 							obj: svc,
@@ -300,7 +295,7 @@
 					}),
 					getServiceFromName: doodad.PROTECTED(function getServiceFromName(svcName) {
 						const services = this.__servicesByName;
-						if (!types.hasKey(services, svcName)) {
+						if (!types.has(services, svcName)) {
 							return null;
 						};
 						return services[svcName];
@@ -312,7 +307,7 @@
 							return null;
 						};
 						const id = svcToken.serviceId;
-						if (!types.hasKey(services, id)) {
+						if (!types.has(services, id)) {
 							return null;
 						};
 						return services[id];
@@ -342,7 +337,7 @@
 						if (!svc) {
 							svc = namespaces.getNamespace(svcName);
 							if (!types._implements(svc, ipcMixIns.Service)) {
-								throw new types.TypeError("Unknown service : '~0~'.", [svcName]);
+								throw new ipc.InvalidRequest("Unknown service : '~0~'.", [svcName]);
 							};
 							if (types.isType(svc)) {
 								svc = svc.$createInstance();
@@ -351,7 +346,7 @@
 							svc = this.registerService(svcName, svc);
 						};
 						if (types.get(options, 'version', 0) !== svc.obj.version) {
-							throw new types.TypeError("Invalid version. Service version is '~0~'.", [svc.version]);
+							throw new ipc.InvalidRequest("Invalid version. Service version is '~0~'.", [svc.version]);
 						};
 						let session = null;
 						if (svc.hasSessions) {
@@ -362,7 +357,7 @@
 					}),
 					
 					getService: doodad.OVERRIDE(ipc.CALLABLE(function getService(request, svcName, /*optional*/options) {
-						const result = request.customData.lastServiceToken = this.__getService(request, svcName, options);
+						const result = request.data.lastServiceToken = this.__getService(request, svcName, options);
 						request.end(result);
 					})),
 					
@@ -374,7 +369,7 @@
 						};
 						let release = false;
 						if (svcToken === -1) {
-							svcToken = request.customData.lastServiceToken;
+							svcToken = request.data.lastServiceToken;
 						} else if (types.isString(svcToken)) {
 							svcToken = this.__getService(request, svcToken);
 							release = true;
@@ -410,7 +405,7 @@
 							root.DD_ASSERT((svcToken === -1) || types.isObject(svcToken), "Invalid service token.");
 						};
 						if (svcToken === -1) {
-							svcToken = request.customData.lastServiceToken;
+							svcToken = request.data.lastServiceToken;
 						};
 						const svc = this.getServiceFromToken(svcToken);
 						if (svc) {			
@@ -431,55 +426,68 @@
 
 				
 				ipc.RequestCallback = types.setPrototypeOf(function(request, obj, fn) {
-					if (fn instanceof types.Callback) {
+					// IMPORTANT: No error should popup from a callback, excepted "ScriptAbortedError".
+					if (types.isPrototypeOf(types.Callback, fn)) {
 						return fn;
 					};
-					if (types.isString(fn)) {
+					if (types.isString(fn) || types.isSymbol(fn)) {
 						fn = obj[fn];
 					};
-					fn = types.makeInside(obj, fn);
+					const insideFn = types.makeInside(obj, fn);
 					let callback = function requestCallback(/*paramarray*/) {
 						try {
 							if (!request.isDestroyed()) {
-								return fn.apply(obj, arguments);
+								return insideFn.apply(obj, arguments);
 							};
 						} catch(ex) {
 							const max = 5; // prevents infinite loop
 							let count = 0,
 								abort = false;
-							while (count < max) {
-								count++;
+							if (request.isDestroyed()) {
+								if (types._instanceof(ex, server.EndOfRequest)) {
+									// Do nothing
+								} else if (types._instanceof(ex, types.ScriptAbortedError)) {
+									abort = true;
+								} else {
+									count = max;
+								};
+							} else {
+								while (count < max) {
+									count++;
+									try {
+										if (types._instanceof(ex, server.EndOfRequest)) {
+											// Do nothing
+										} else if (types._instanceof(ex, types.ScriptAbortedError)) {
+											abort = true;
+										} else {
+											// Internal or server error.
+											request.respondWithError(ex);
+										};
+										break;
+									} catch(o) {
+										ex = o;
+									};
+								};
+							};
+							if (abort) {
+								throw ex;
+							} else if (count >= max) {
+								// Failed to respond with internal error.
 								try {
-									if (types._instanceof(ex, server.EndOfRequest)) {
-										// Do nothing
-									} else if (types._instanceof(ex, types.ScriptAbortedError)) {
-										abort = true;
-									} else {
-										// Internal or server error.
-										request.respondWithError(ex);
-									};
-									break;
+									doodad.trapException(obj, ex, attr);
 								} catch(o) {
-									ex = o;
 								};
-								if (abort) {
-									throw ex;
-								};
-								if (count >= max) {
-									// Failed to respond with internal error.
-									try {
-										doodad.trapException(obj, ex, attr);
-									} catch(o) {
-									};
-									try {
+								try {
+									if (!request.isDestroyed()) {
 										request.destroy();
-									} catch(o) {
 									};
+								} catch(o) {
 								};
 							};
 						};
 					};
 					callback = types.setPrototypeOf(callback, ipc.RequestCallback);
+					callback[types.OriginalValueSymbol] = fn;
 					return callback;
 				}, types.Callback);
 				
