@@ -44,7 +44,7 @@
 			version: /*! REPLACE_BY(TO_SOURCE(VERSION(MANIFEST("name")))) */ null /*! END_REPLACE() */,
 			namespaces: ['Interfaces', 'MixIns', 'Extenders'],
 
-			create: function create(root, /*optional*/_options) {
+			create: function create(root, /*optional*/_options, _shared) {
 				"use strict";
 
 				const doodad = root.Doodad,
@@ -68,12 +68,12 @@
 				//};
 
 				
-				ipc.Error = types.createErrorType('IpcError', types.ScriptInterruptedError);
+				ipc.Error = types.createErrorType('IpcError', types.Error);
 				ipc.InvalidRequest = types.createErrorType('InvalidRequest', ipc.Error, function(/*optional*/message, /*optional*/params) {
-					ipc.Error.call(this, message || "Invalid request.", params);
+					return ipc.Error.call(this, message || "Invalid request.", params);
 				});
 				ipc.MethodNotCallable = types.createErrorType('MethodNotCallable', ipc.Error, function(/*optional*/message, /*optional*/params) {
-					ipc.Error.call(this, message || "Method '~1~' of '~0~' is not callable or doesn't exist.", params);
+					return ipc.Error.call(this, message || "Method '~1~' of '~0~' is not callable or doesn't exist.", params);
 				});
 				
 				ipcExtenders.REGISTER(extenders.Method.$inherit({
@@ -86,22 +86,23 @@
 						const val = types.unbox(fn);
 						root.DD_ASSERT(types.isNothing(val) || types.isJsFunction(val), "Invalid function.");
 					};
-					return doodad.RETURNS(types.isSerializable, doodad.ATTRIBUTE(fn, ipcExtenders.Callable));
+					//return doodad.RETURNS(types.isSerializable, doodad.ATTRIBUTE(fn, ipcExtenders.Callable));
+					return doodad.ASYNC(doodad.ATTRIBUTE(fn, ipcExtenders.Callable));
 				};
 				
 				ipc.isCallable = function isCallable(obj, name) {
-					const attr = doodad.getAttributeDescriptor(obj, name);
+					const attr = _shared.getAttributeDescriptor(obj, name);
 					if (!attr) {
 						return false;
 					};
-					const extender = attr.EXTENDER;
+					const extender = attr[_shared.ExtenderSymbol];
 					if (!types.isLike(extender, ipcExtenders.Callable)) {
 						return false;
 					};
 					const isType = types.isType(obj);
 					return ((isType && extender.isType) || (!isType && extender.isInstance));
 				};
-					
+				
 				ipc.REGISTER(doodad.BASE(doodad.Object.$extend(
 									serverMixIns.Request,
 				{
@@ -110,7 +111,7 @@
 					method: doodad.PUBLIC(doodad.READ_ONLY(null)),
 					args: doodad.PUBLIC(doodad.READ_ONLY(null)),
 					session: doodad.PUBLIC(doodad.READ_ONLY(null)),
-					
+
 					create: doodad.OVERRIDE(function(server, method, /*optional*/args, /*optional*/session) {
 						if (root.DD_ASSERT) {
 							root.DD_ASSERT(types._implements(server, ipcInterfaces.IServer), "Invalid server.");
@@ -119,14 +120,64 @@
 							root.DD_ASSERT(types.isNothing(session) || (session instanceof server.Session), "Invalid session.");
 						};
 						this._super();
-						types.setAttributes(this, {
+						_shared.setAttributes(this, {
 							server: server,
 							method: method,
 							args: args,
 							session : session,
-							data: {},
 						});
 					}),
+					
+					catchError: function catchError(ex) {
+						const request = this;
+						const max = 5; // prevents infinite loop
+						let count = 0,
+							abort = false;
+						if (request.isDestroyed()) {
+							if (types._instanceof(ex, server.EndOfRequest)) {
+								// Do nothing
+							} else if (types._instanceof(ex, types.ScriptAbortedError)) {
+								abort = true;
+							} else {
+								count = max;
+							};
+						} else {
+							while (count < max) {
+								count++;
+								try {
+									if (types._instanceof(ex, server.EndOfRequest)) {
+										// Do nothing
+									} else if (types._instanceof(ex, types.ScriptAbortedError)) {
+										abort = true;
+									} else if (types._instanceof(ex, types.ScriptInterruptedError)) {
+										request.end();
+									} else {
+										// Internal or server error.
+										request.respondWithError(ex);
+									};
+									break;
+								} catch(o) {
+									ex = o;
+								};
+							};
+						};
+						if (abort) {
+							throw ex;
+						} else if (count >= max) {
+							// Failed to respond with internal error.
+							try {
+								doodad.trapException(ex);
+							} catch(o) {
+								debugger;
+							};
+							try {
+								if (!request.isDestroyed()) {
+									request.destroy();
+								};
+							} catch(o) {
+							};
+						};
+					},
 				})));
 
 				// What an object must implement to be an IPC/RPC Service
@@ -148,7 +199,7 @@
 						if (!ipc.isCallable(this[doodad.HostSymbol], request.method)) {
 							throw new ipc.MethodNotCallable(null, [types.getTypeName(this[doodad.HostSymbol]), request.method]);
 						};
-						return types.invoke(this[doodad.HostSymbol], request.method, types.append([request], request.args));
+						return _shared.invoke(this[doodad.HostSymbol], request.method, types.append([request], request.args));
 					}),
 				}))));
 				
@@ -158,9 +209,9 @@
 					$TYPE_NAME: 'IServiceManager',
 
 					// NOTE: "PUBLIC" to allow in-process call				
-					getService: doodad.PUBLIC(doodad.NOT_IMPLEMENTED()),
-					callService: doodad.PUBLIC(doodad.NOT_IMPLEMENTED()),
-					releaseService: doodad.PUBLIC(doodad.NOT_IMPLEMENTED()),
+					getService: doodad.PUBLIC(ipc.CALLABLE(doodad.NOT_IMPLEMENTED())),
+					callService: doodad.PUBLIC(ipc.CALLABLE(doodad.NOT_IMPLEMENTED())),
+					releaseService: doodad.PUBLIC(ipc.CALLABLE(doodad.NOT_IMPLEMENTED())),
 				})));
 				
 				// What an IPC/RPC Client must implement
@@ -224,7 +275,7 @@
 							root.DD_ASSERT(types._implements(service, ipcMixIns.Service), "Invalid service.");
 						};
 						this._super();
-						types.setAttribute(this, 'service', service);
+						_shared.setAttribute(this, 'service', service);
 					}),
 				})));
 				
@@ -237,10 +288,7 @@
 					create: doodad.OVERRIDE(function create(innerRequest, server, method, /*optional*/args, /*optional*/session) {
 						this._super(server, method, args, session);
 
-						types.setAttributes(this, {
-							innerRequest: innerRequest,
-							data: {},
-						});
+						_shared.setAttribute(this, 'innerRequest', innerRequest);
 					}),
 					
 					end: doodad.OVERRIDE(function end(/*optional*/result) {
@@ -319,15 +367,16 @@
 						};
 					}),
 					
-					getSessionFromToken: doodad.PROTECTED(function getSessionFromToken(svcToken) {
+					getSessionFromToken: doodad.PROTECTED(doodad.ASYNC(function getSessionFromToken(svcToken) {
 						// TODO: Implement sessions
-					}),
-					createSession: doodad.PROTECTED(function createSession() {
+					})),
+					createSession: doodad.PROTECTED(doodad.ASYNC(function createSession() {
 						// TODO: Implement sessions
-					}),
+					})),
 					
 					
-					__getService: doodad.PROTECTED(function __getService(request, svcName, /*optional*/options) {
+					__getService: doodad.PROTECTED(doodad.ASYNC(function __getService(request, svcName, /*optional*/options) {
+						const Promise = types.getPromise();
 						if (root.DD_ASSERT) {
 							root.DD_ASSERT(types.isString(svcName), "Invalid service name.");
 							root.DD_ASSERT(types.isNothing(options) || types.isObject(options), "Invalid options.");
@@ -335,7 +384,7 @@
 						let isStateFull,
 							svc = this.getServiceFromName(svcName);
 						if (!svc) {
-							svc = namespaces.getNamespace(svcName);
+							svc = namespaces.get(svcName);
 							if (!types._implements(svc, ipcMixIns.Service)) {
 								throw new ipc.InvalidRequest("Unknown service : '~0~'.", [svcName]);
 							};
@@ -348,59 +397,74 @@
 						if (types.get(options, 'version', 0) !== svc.obj.version) {
 							throw new ipc.InvalidRequest("Invalid version. Service version is '~0~'.", [svc.version]);
 						};
-						let session = null;
+						let sessionPromise = null;
 						if (svc.hasSessions) {
-							session = this.createSession();
-							svc.obj.initSession(session, options);
+							sessionPromise = this.createSession()
+								.then(function initSessionPromise(session) {
+									svc.obj.initSession(session, options);
+									return session;
+								});
+						} else {
+							sessionPromise = Promise.resolve(null);
 						};
-						return this.getServiceToken(svc, options, session);
-					}),
-					
-					getService: doodad.OVERRIDE(ipc.CALLABLE(function getService(request, svcName, /*optional*/options) {
-						const result = request.data.lastServiceToken = this.__getService(request, svcName, options);
-						request.end(result);
+						return sessionPromise
+							.then(function getTokenPromise(session) {
+								return this.getServiceToken(svc, options, session);
+							}, this);
 					})),
 					
-					callService: doodad.OVERRIDE(ipc.CALLABLE(function callService(request, svcToken, method, /*optional*/args) {
+					getService: doodad.OVERRIDE(function getService(request, svcName, /*optional*/options) {
+						return this.__getService(request, svcName, options)
+							.then(function(token) {
+								request.data.lastServiceToken = token;
+							});
+					}),
+					
+					callService: doodad.OVERRIDE(function callService(request, svcToken, method, /*optional*/args) {
 						if (root.DD_ASSERT) {
 							root.DD_ASSERT((svcToken === -1) || types.isString(svcToken) || types.isObject(svcToken), "Invalid service token.");
 							root.DD_ASSERT(types.isString(method), "Invalid method name.");
 							root.DD_ASSERT(types.isNothing(args) || types.isArray(args), "Invalid method arguments.");
 						};
-						let release = false;
-						if (svcToken === -1) {
-							svcToken = request.data.lastServiceToken;
-						} else if (types.isString(svcToken)) {
-							svcToken = this.__getService(request, svcToken);
+						let release = false,
+							tokenPromise;
+						if (types.isString(svcToken)) {
 							release = true;
+							tokenPromise = this.__getService(request, svcToken);
+						} else if (svcToken === -1) { // Previous service token
+							tokenPromise = Promise.resolve(request.data.lastServiceToken);
+						} else {
+							tokenPromise = Promise.resolve(svcToken);
 						};
-						let newRequest = null;
-						try {
-							const svc = this.getServiceFromToken(svcToken);
-							if (!svc) {
-								throw new ipc.Error("Invalid service token.");
-							};
-							const session = this.getSessionFromToken(svcToken);
-							newRequest = this.createManagerRequest(request, method, args, session);
-							return svc.obj.execute(newRequest);
-						} catch(ex) {
-							if (!(ex instanceof server.EndOfRequest)) {
-								if (newRequest) {
-									newRequest.respondWithError(ex);
-								} else {
-									request.respondWithError(ex);
+						return tokenPromise
+							.then(function proceedToken(token) {
+								const svc = this.getServiceFromToken(token);
+								if (!svc) {
+									throw new ipc.Error("Invalid service token.");
 								};
-							} else {
-								throw ex;
-							};
-						} finally {
-							if (release) {
-								this.__releaseService(request, svcToken);
-							};
-						};
-					})),
+								return this.getSessionFromToken(token)
+									.then(function executeRequestPromise(session) {
+										const newRequest = this.createManagerRequest(request, method, args, session);
+										return svc.obj.execute(newRequest)
+											.then(function endRequestPromise(result) {
+												newRequest.end(result);
+											})
+											.catch(newRequest.catchError)
+											.finally(function cleanupRequestPromise() {
+												if (!newRequest.isDestroyed()) {
+													newRequest.destroy();
+												};
+											});
+									}, this)
+									.finally(function cleanupPromise() {
+										if (release) {
+											return this.releaseService(request, token);
+										};
+									}, this);
+							}, this);
+					}),
 					
-					__releaseService: doodad.PROTECTED(function __releaseService(request, svcToken) {
+					releaseService: doodad.OVERRIDE(function releaseService(request, svcToken) {
 						if (root.DD_ASSERT) {
 							root.DD_ASSERT((svcToken === -1) || types.isObject(svcToken), "Invalid service token.");
 						};
@@ -408,89 +472,17 @@
 							svcToken = request.data.lastServiceToken;
 						};
 						const svc = this.getServiceFromToken(svcToken);
-						if (svc) {			
-							const session = svc.hasSessions && this.getSessionFromToken(svcToken);
-							if (session) {
-								session.destroy();
+						if (svc) {
+							if (svc.hasSessions) {
+								return this.getSessionFromToken(svcToken)
+									.then(function deleteSessionPromise(session) {
+										session.remove();
+										session.destroy();
+									});
 							};
 						};
 					}),
-					
-					releaseService: doodad.OVERRIDE(ipc.CALLABLE(function releaseService(request, svcToken) {
-						this.__releaseService(request, svcToken);
-						request.end();
-					})),
 				}));
-
-
-
-				
-				ipc.RequestCallback = types.setPrototypeOf(function(request, obj, fn) {
-					// IMPORTANT: No error should popup from a callback, excepted "ScriptAbortedError".
-					if (types.isPrototypeOf(types.Callback, fn)) {
-						return fn;
-					};
-					if (types.isString(fn) || types.isSymbol(fn)) {
-						fn = obj[fn];
-					};
-					const insideFn = types.makeInside(obj, fn);
-					let callback = function requestCallback(/*paramarray*/) {
-						try {
-							if (!request.isDestroyed()) {
-								return insideFn.apply(obj, arguments);
-							};
-						} catch(ex) {
-							const max = 5; // prevents infinite loop
-							let count = 0,
-								abort = false;
-							if (request.isDestroyed()) {
-								if (types._instanceof(ex, server.EndOfRequest)) {
-									// Do nothing
-								} else if (types._instanceof(ex, types.ScriptAbortedError)) {
-									abort = true;
-								} else {
-									count = max;
-								};
-							} else {
-								while (count < max) {
-									count++;
-									try {
-										if (types._instanceof(ex, server.EndOfRequest)) {
-											// Do nothing
-										} else if (types._instanceof(ex, types.ScriptAbortedError)) {
-											abort = true;
-										} else {
-											// Internal or server error.
-											request.respondWithError(ex);
-										};
-										break;
-									} catch(o) {
-										ex = o;
-									};
-								};
-							};
-							if (abort) {
-								throw ex;
-							} else if (count >= max) {
-								// Failed to respond with internal error.
-								try {
-									doodad.trapException(obj, ex, attr);
-								} catch(o) {
-								};
-								try {
-									if (!request.isDestroyed()) {
-										request.destroy();
-									};
-								} catch(o) {
-								};
-							};
-						};
-					};
-					callback = types.setPrototypeOf(callback, ipc.RequestCallback);
-					callback[types.OriginalValueSymbol] = fn;
-					return callback;
-				}, types.Callback);
-				
 			},
 		};
 		
