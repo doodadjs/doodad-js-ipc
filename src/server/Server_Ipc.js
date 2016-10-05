@@ -1,8 +1,9 @@
+//! BEGIN_MODULE()
+
 //! REPLACE_BY("// Copyright 2016 Claude Petit, licensed under Apache License version 2.0\n", true)
-// dOOdad - Object-oriented programming framework
+// doodad-js - Object-oriented programming framework
 // File: Server_Ipc.js - Server tools
-// Project home: https://sourceforge.net/projects/doodad-js/
-// Trunk: svn checkout svn://svn.code.sf.net/p/doodad-js/code/trunk doodad-js-code
+// Project home: https://github.com/doodadjs/
 // Author: Claude Petit, Quebec city
 // Contact: doodadjs [at] gmail.com
 // Note: I'm still in alpha-beta stage, so expect to find some bugs or incomplete parts !
@@ -23,25 +24,11 @@
 //	limitations under the License.
 //! END_REPLACE()
 
-(function() {
-	const global = this;
-
-	var exports = {};
-	
-	//! BEGIN_REMOVE()
-	if ((typeof process === 'object') && (typeof module === 'object')) {
-	//! END_REMOVE()
-		//! IF_DEF("serverSide")
-			module.exports = exports;
-		//! END_IF()
-	//! BEGIN_REMOVE()
-	};
-	//! END_REMOVE()
-	
-	exports.add = function add(DD_MODULES) {
+module.exports = {
+	add: function add(DD_MODULES) {
 		DD_MODULES = (DD_MODULES || {});
 		DD_MODULES['Doodad.Server.Ipc'] = {
-			version: /*! REPLACE_BY(TO_SOURCE(VERSION(MANIFEST("name")))) */ null /*! END_REPLACE() */,
+			version: /*! REPLACE_BY(TO_SOURCE(VERSION(MANIFEST("name")))) */ null /*! END_REPLACE()*/,
 			namespaces: ['Interfaces', 'MixIns', 'Extenders'],
 
 			create: function create(root, /*optional*/_options, _shared) {
@@ -56,7 +43,6 @@
 					extenders = doodad.Extenders,
 					io = doodad.IO,
 					server = doodad.Server,
-					serverInterfaces = server.Interfaces,
 					serverMixIns = server.MixIns,
 					ipc = server.Ipc,
 					ipcInterfaces = ipc.Interfaces,
@@ -68,13 +54,13 @@
 				//};
 
 				
-				ipc.Error = types.createErrorType('IpcError', types.Error);
-				ipc.InvalidRequest = types.createErrorType('InvalidRequest', ipc.Error, function(/*optional*/message, /*optional*/params) {
+				ipc.REGISTER(types.createErrorType('Error', types.Error));
+				ipc.REGISTER(types.createErrorType('InvalidRequest', ipc.Error, function(/*optional*/message, /*optional*/params) {
 					return ipc.Error.call(this, message || "Invalid request.", params);
-				});
-				ipc.MethodNotCallable = types.createErrorType('MethodNotCallable', ipc.Error, function(/*optional*/message, /*optional*/params) {
+				}));
+				ipc.REGISTER(types.createErrorType('MethodNotCallable', ipc.Error, function(/*optional*/message, /*optional*/params) {
 					return ipc.Error.call(this, message || "Method '~1~' of '~0~' is not callable or doesn't exist.", params);
-				});
+				}));
 				
 				ipcExtenders.REGISTER(extenders.Method.$inherit({
 					$TYPE_NAME: "Callable",
@@ -128,61 +114,66 @@
 						});
 					}),
 					
-					catchError: function catchError(ex) {
+					catchError: doodad.OVERRIDE(function catchError(ex) {
 						const request = this;
 						const max = 5; // prevents infinite loop
-						let count = 0,
-							abort = false;
-						if (request.isDestroyed()) {
-							if (types._instanceof(ex, server.EndOfRequest)) {
-								// Do nothing
-							} else if (types._instanceof(ex, types.ScriptAbortedError)) {
-								abort = true;
-							} else {
-								count = max;
-							};
-						} else {
-							while (count < max) {
-								count++;
+						let count = 0;
+						const _catchError = function _catchError(ex) {
+							if (count >= max) {
+								// Failed to respond with internal error.
 								try {
-									if (types._instanceof(ex, server.EndOfRequest)) {
-										// Do nothing
-									} else if (types._instanceof(ex, types.ScriptAbortedError)) {
-										abort = true;
-									} else if (types._instanceof(ex, types.ScriptInterruptedError)) {
-										request.end();
-									} else {
-										// Internal or server error.
-										request.respondWithError(ex);
-									};
-									break;
+									doodad.trapException(ex);
 								} catch(o) {
-									ex = o;
+								};
+								try {
+									if (!request.isDestroyed()) {
+										request.destroy();
+									};
+								} catch(o) {
+								};
+							} else if (this.isDestroyed()) {
+								if (ex.critical) {
+									throw ex;
+								} else if (ex.bubble) {
+									// Do nothing
+								} else {
+									try {
+										doodad.trapException(ex);
+									} catch(o) {
+									};
+								};
+								try {
+									if (!request.isDestroyed()) {
+										request.destroy();
+									};
+								} catch(o) {
+								};
+							} else {
+								count++;
+								if (types._instanceof(ex, server.EndOfRequest)) {
+									// Do nothing
+								} else if (ex.critical) {
+									throw ex;
+								} else if (ex.bubble) {
+									return request.end()
+										.catch(this.catchError);
+								} else {
+									// Internal or server error.
+									return request.respondWithError(ex)
+										.catch(this.catchError);
 								};
 							};
 						};
-						if (abort) {
-							throw ex;
-						} else if (count >= max) {
-							// Failed to respond with internal error.
-							try {
-								doodad.trapException(ex);
-							} catch(o) {
-								debugger;
-							};
-							try {
-								if (!request.isDestroyed()) {
-									request.destroy();
-								};
-							} catch(o) {
-							};
-						};
-					},
+
+						return _catchError.call(this, ex);
+					}),
+
+					respondWithError: doodad.PUBLIC(doodad.ASYNC(doodad.MUST_OVERRIDE())), // function respondWithError(ex)
 				})));
 
 				// What an object must implement to be an IPC/RPC Service
 				ipcMixIns.REGISTER(doodad.ISOLATED(doodad.MIX_IN(doodad.Class.$extend(
-									serverInterfaces.Response,
+									serverMixIns.Response,
 				{
 					$TYPE_NAME: 'Service',
 
@@ -199,7 +190,7 @@
 						if (!ipc.isCallable(this[doodad.HostSymbol], request.method)) {
 							throw new ipc.MethodNotCallable(null, [types.getTypeName(this[doodad.HostSymbol]), request.method]);
 						};
-						return _shared.invoke(this[doodad.HostSymbol], request.method, types.append([request], request.args));
+						return _shared.invoke(this[doodad.HostSymbol], request.method, types.append([request], request.args), _shared.SECRET);
 					}),
 				}))));
 				
@@ -265,7 +256,7 @@
 				})));
 				
 				ipc.REGISTER(doodad.BASE(doodad.Object.$extend(
-									serverInterfaces.Server,
+									serverMixIns.Server,
 									ipcInterfaces.IServer,
 				{
 					$TYPE_NAME: 'Server',
@@ -292,11 +283,11 @@
 					}),
 					
 					end: doodad.OVERRIDE(function end(/*optional*/result) {
-						this.innerRequest.end(result);
+						return this.innerRequest.end(result);
 					}),
 
 					respondWithError: doodad.OVERRIDE(function respondWithError(ex) {
-						this.innerRequest.respondWithError(ex);
+						return this.innerRequest.respondWithError(ex);
 					}),
 				}));
 
@@ -395,7 +386,7 @@
 							svc = this.registerService(svcName, svc);
 						};
 						if (types.get(options, 'version', 0) !== svc.obj.version) {
-							throw new ipc.InvalidRequest("Invalid version. Service version is '~0~'.", [svc.version]);
+							throw new ipc.InvalidRequest("Invalid version. Service version is '~0~'.", [svc.obj.version]);
 						};
 						let sessionPromise = null;
 						if (svc.hasSessions) {
@@ -447,7 +438,7 @@
 										const newRequest = this.createManagerRequest(request, method, args, session);
 										return svc.obj.execute(newRequest)
 											.then(function endRequestPromise(result) {
-												newRequest.end(result);
+												return newRequest.end(result);
 											})
 											.catch(newRequest.catchError)
 											.finally(function cleanupRequestPromise() {
@@ -485,27 +476,7 @@
 				}));
 			},
 		};
-		
 		return DD_MODULES;
-	};
-	
-	//! BEGIN_REMOVE()
-	if ((typeof process !== 'object') || (typeof module !== 'object')) {
-	//! END_REMOVE()
-		//! IF_UNDEF("serverSide")
-			// <PRB> export/import are not yet supported in browsers
-			global.DD_MODULES = exports.add(global.DD_MODULES);
-		//! END_IF()
-	//! BEGIN_REMOVE()
-	};
-	//! END_REMOVE()
-}).call(
-	//! BEGIN_REMOVE()
-	(typeof window !== 'undefined') ? window : ((typeof global !== 'undefined') ? global : this)
-	//! END_REMOVE()
-	//! IF_DEF("serverSide")
-	//! 	INJECT("global")
-	//! ELSE()
-	//! 	INJECT("window")
-	//! END_IF()
-);
+	},
+};
+//! END_MODULE()
