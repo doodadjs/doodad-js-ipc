@@ -54,7 +54,10 @@ module.exports = {
 				//};
 
 				
-				ipc.REGISTER(types.createErrorType('Error', types.Error));
+				ipc.REGISTER(types.createErrorType('Error', types.Error, function(/*optional*/message, /*optional*/params) {
+					this.bubble = true;
+					return types.Error.call(this, message || "General IPC error.", params);
+				}));
 				ipc.REGISTER(types.createErrorType('InvalidRequest', ipc.Error, function(/*optional*/message, /*optional*/params) {
 					return ipc.Error.call(this, message || "Invalid request.", params);
 				}));
@@ -97,6 +100,7 @@ module.exports = {
 					method: doodad.PUBLIC(doodad.READ_ONLY(null)),
 					args: doodad.PUBLIC(doodad.READ_ONLY(null)),
 					session: doodad.PUBLIC(doodad.READ_ONLY(null)),
+					data: doodad.PUBLIC(doodad.READ_ONLY(null)),
 
 					create: doodad.OVERRIDE(function(server, method, /*optional*/args, /*optional*/session) {
 						if (root.DD_ASSERT) {
@@ -111,11 +115,11 @@ module.exports = {
 							method: method,
 							args: args,
 							session : session,
+							data: types.nullObject(),
 						});
 					}),
 					
 					catchError: doodad.OVERRIDE(function catchError(ex) {
-						const request = this;
 						const max = 5; // prevents infinite loop
 						let count = 0;
 						const _catchError = function _catchError(ex) {
@@ -123,12 +127,6 @@ module.exports = {
 								// Failed to respond with internal error.
 								try {
 									doodad.trapException(ex);
-								} catch(o) {
-								};
-								try {
-									if (!request.isDestroyed()) {
-										request.destroy();
-									};
 								} catch(o) {
 								};
 							} else if (this.isDestroyed()) {
@@ -142,25 +140,22 @@ module.exports = {
 									} catch(o) {
 									};
 								};
-								try {
-									if (!request.isDestroyed()) {
-										request.destroy();
-									};
-								} catch(o) {
-								};
 							} else {
 								count++;
-								if (types._instanceof(ex, server.EndOfRequest)) {
+								if (types._instanceof(ex, ipc.Error)) {
+									return this.respondWithError(ex)
+										.catch(_catchError, this);
+								} else if (types._instanceof(ex, server.EndOfRequest)) {
 									// Do nothing
 								} else if (ex.critical) {
 									throw ex;
 								} else if (ex.bubble) {
-									return request.end()
-										.catch(this.catchError);
+									return this.end()
+										.catch(_catchError, this);
 								} else {
 									// Internal or server error.
-									return request.respondWithError(ex)
-										.catch(this.catchError);
+									return this.respondWithError(ex)
+										.catch(_catchError, this);
 								};
 							};
 						};
@@ -200,9 +195,9 @@ module.exports = {
 					$TYPE_NAME: 'IServiceManager',
 
 					// NOTE: "PUBLIC" to allow in-process call				
-					getService: doodad.PUBLIC(ipc.CALLABLE(doodad.NOT_IMPLEMENTED())),
-					callService: doodad.PUBLIC(ipc.CALLABLE(doodad.NOT_IMPLEMENTED())),
-					releaseService: doodad.PUBLIC(ipc.CALLABLE(doodad.NOT_IMPLEMENTED())),
+					getService: doodad.PUBLIC(ipc.CALLABLE(doodad.NOT_IMPLEMENTED())), // function(svcName, /*optional*/svcOptions, /*optional*/options)
+					callService: doodad.PUBLIC(ipc.CALLABLE(doodad.NOT_IMPLEMENTED())), // function(svcToken, method, /*optional*/args, /*optional*/options)
+					releaseService: doodad.PUBLIC(ipc.CALLABLE(doodad.NOT_IMPLEMENTED())), // function(svcToken, /*optional*/options)
 				})));
 				
 				// What an IPC/RPC Client must implement
