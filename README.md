@@ -17,49 +17,6 @@ $ npm install doodad-js-ipc
   -  Services manager and locator.
   -  Sessions (not fully developed).
 
-## Quick Start
-
-By default, Doodad is running in production mode, which disables every validations. You may want to activate the development mode by setting the "NODE_ENV" environment variable :
-
-Windows :
-```dos
-    set NODE_ENV=development
-```
-Linux :
-```bash
-    export NODE_ENV=development
-```
-Now create the root namespace :
-```js
-    const root = require('doodad-js').createRoot();
-```
-
-You can create a shortcut to the namespaces this way :
-```js
-    const doodad = root.Doodad,
-        types = doodad.Types,
-        tools = doodad.Tools,
-        mixins = doodad.MixIns,
-        interfaces = doodad.Interfaces,
-        extenders = doodad.Extenders,
-        namespaces = doodad.Namespaces,
-        ... ;
-```
-
-Then load 'doodad-js-ipc' and its dependencies :
-```js
-    const modules = {};
-	require('doodad-js-io').add(modules);
-	require('doodad-js-server').add(modules);
-	require('doodad-js-ipc').add(modules);
-    
-    function startup() {
-        // your code here...
-    };
-    
-    namespaces.load(modules, startup);
-```
-
 ## Example
 
 Please install "doodad-js-test" and browse its source code. Begin with file "./src/server/units/index.js".
