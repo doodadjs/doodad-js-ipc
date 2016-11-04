@@ -412,6 +412,7 @@ module.exports = {
 							root.DD_ASSERT(types.isString(method), "Invalid method name.");
 							root.DD_ASSERT(types.isNothing(args) || types.isArray(args), "Invalid method arguments.");
 						};
+						const Promise = types.getPromise();
 						let release = false,
 							tokenPromise;
 						if (types.isString(svcToken)) {
@@ -434,20 +435,20 @@ module.exports = {
 										return svc.obj.execute(newRequest)
 											.then(function endRequestPromise(result) {
 												return newRequest.end(result);
-											})
+											}, null, this)
 											.catch(newRequest.catchError)
 											.finally(function cleanupRequestPromise() {
 												if (!newRequest.isDestroyed()) {
 													newRequest.destroy();
 												};
-											});
-									}, this)
+											}, this);
+									}, null, this)
 									.finally(function cleanupPromise() {
 										if (release) {
 											return this.releaseService(request, token);
 										};
 									}, this);
-							}, this);
+							}, null, this);
 					}),
 					
 					releaseService: doodad.OVERRIDE(function releaseService(request, svcToken) {
