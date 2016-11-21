@@ -70,16 +70,16 @@ module.exports = {
 				}));
 
 				// Modifier to set a method of a service as IPC/RPC callable
-				ipc.CALLABLE = function CALLABLE(/*optional*/fn) {
+				ipc.ADD('CALLABLE', function CALLABLE(/*optional*/fn) {
 					if (root.DD_ASSERT) {
 						const val = types.unbox(fn);
 						root.DD_ASSERT(types.isNothing(val) || types.isJsFunction(val), "Invalid function.");
 					};
 					//return doodad.RETURNS(types.isSerializable, doodad.ATTRIBUTE(fn, ipcExtenders.Callable));
 					return doodad.ASYNC(doodad.ATTRIBUTE(fn, ipcExtenders.Callable));
-				};
+				});
 				
-				ipc.isCallable = function isCallable(obj, name) {
+				ipc.ADD('isCallable', function isCallable(obj, name) {
 					const attr = _shared.getAttributeDescriptor(obj, name);
 					if (!attr) {
 						return false;
@@ -90,7 +90,7 @@ module.exports = {
 					};
 					const isType = types.isType(obj);
 					return ((isType && extender.isType) || (!isType && extender.isInstance));
-				};
+				});
 				
 				ipc.REGISTER(doodad.BASE(doodad.Object.$extend(
 									serverMixIns.Request,
