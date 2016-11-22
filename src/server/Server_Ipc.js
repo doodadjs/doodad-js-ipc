@@ -55,14 +55,14 @@ module.exports = {
 
 				
 				ipc.REGISTER(types.createErrorType('Error', types.Error, function(/*optional*/message, /*optional*/params) {
-					this.bubble = true;
-					return types.Error.call(this, message || "General IPC error.", params);
+					this._this.bubble = true;
+					this._super.call(this._this, message || "General IPC error.", params);
 				}));
 				ipc.REGISTER(types.createErrorType('InvalidRequest', ipc.Error, function(/*optional*/message, /*optional*/params) {
-					return ipc.Error.call(this, message || "Invalid request.", params);
+					this._super.call(this._this, message || "Invalid request.", params);
 				}));
 				ipc.REGISTER(types.createErrorType('MethodNotCallable', ipc.Error, function(/*optional*/message, /*optional*/params) {
-					return ipc.Error.call(this, message || "Method '~1~' of '~0~' is not callable or doesn't exist.", params);
+					this._super.call(this._this, message || "Method '~1~' of '~0~' is not callable or doesn't exist.", params);
 				}));
 				
 				ipcExtenders.REGISTER(extenders.Method.$inherit({
