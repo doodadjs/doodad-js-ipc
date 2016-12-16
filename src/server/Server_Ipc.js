@@ -67,6 +67,7 @@ module.exports = {
 				
 				ipcExtenders.REGISTER(extenders.Method.$inherit({
 					$TYPE_NAME: "Callable",
+					$TYPE_UUID: '' /*! INJECT('+' + TO_SOURCE(UUID('CallableExtender')), true) */,
 				}));
 
 				// Modifier to set a method of a service as IPC/RPC callable
@@ -96,6 +97,7 @@ module.exports = {
 									serverMixIns.Request,
 				{
 					$TYPE_NAME: 'Request',
+					$TYPE_UUID: '' /*! INJECT('+' + TO_SOURCE(UUID('RequestBase')), true) */,
 					
 					method: doodad.PUBLIC(doodad.READ_ONLY(null)),
 					args: doodad.PUBLIC(doodad.READ_ONLY(null)),
@@ -171,6 +173,7 @@ module.exports = {
 									serverMixIns.Response,
 				{
 					$TYPE_NAME: 'Service',
+					$TYPE_UUID: '' /*! INJECT('+' + TO_SOURCE(UUID('ServiceIsolatedMixIn')), true) */,
 
 					// Override this attribute with current version of the service. Client's version and server's version must be the same.
 					version: doodad.PUBLIC(doodad.READ_ONLY( 0 )),
@@ -193,6 +196,7 @@ module.exports = {
 				ipcInterfaces.REGISTER(doodad.INTERFACE(doodad.Class.$extend(
 				{
 					$TYPE_NAME: 'IServiceManager',
+					$TYPE_UUID: '' /*! INJECT('+' + TO_SOURCE(UUID('IServiceManagerInterface')), true) */,
 
 					// NOTE: "PUBLIC" to allow in-process call				
 					getService: doodad.PUBLIC(ipc.CALLABLE(doodad.NOT_IMPLEMENTED())), // function(svcName, /*optional*/svcOptions, /*optional*/options)
@@ -206,6 +210,7 @@ module.exports = {
 									ipcInterfaces.IServiceManager,
 				{
 					$TYPE_NAME: 'IClient',
+					$TYPE_UUID: '' /*! INJECT('+' + TO_SOURCE(UUID('IServiceManagerMixIn')), true) */,
 					
 					connect: doodad.PUBLIC(doodad.MUST_OVERRIDE()), // function connect(/*optional*/options)
 					callMethod: doodad.PUBLIC(doodad.MUST_OVERRIDE()), // function callMethod(method, /*optional*/args, /*optional*/options)
@@ -239,6 +244,7 @@ module.exports = {
 									ipcMixIns.IClient,
 				{
 					$TYPE_NAME: 'Client',
+					$TYPE_UUID: '' /*! INJECT('+' + TO_SOURCE(UUID('ClientBase')), true) */,
 				})));
 				
 				// What an IPC/RPC Server must implement
@@ -246,6 +252,7 @@ module.exports = {
 				ipcInterfaces.REGISTER(doodad.INTERFACE(doodad.Class.$extend(
 				{
 					$TYPE_NAME: 'IServer',
+					$TYPE_UUID: '' /*! INJECT('+' + TO_SOURCE(UUID('IServerInterface')), true) */,
 					
 					service: doodad.PUBLIC(doodad.READ_ONLY(  null  )),  // Can be "ServiceManager" or another service
 				})));
@@ -255,6 +262,7 @@ module.exports = {
 									ipcInterfaces.IServer,
 				{
 					$TYPE_NAME: 'Server',
+					$TYPE_UUID: '' /*! INJECT('+' + TO_SOURCE(UUID('ServerBase')), true) */,
 					
 					create: doodad.OVERRIDE(function create(service) {
 						if (root.DD_ASSERT) {
@@ -268,6 +276,7 @@ module.exports = {
 				ipc.REGISTER(ipc.Request.$extend(
 				{
 					$TYPE_NAME: 'ServiceManagerRequest',
+					$TYPE_UUID: '' /*! INJECT('+' + TO_SOURCE(UUID('ServiceManagerRequest')), true) */,
 					
 					innerRequest: doodad.PUBLIC(doodad.READ_ONLY(  null  )),
 					
@@ -293,6 +302,7 @@ module.exports = {
 									ipcMixIns.Service,
 				{
 					$TYPE_NAME: 'ServiceManager',
+					$TYPE_UUID: '' /*! INJECT('+' + TO_SOURCE(UUID('ServiceManager')), true) */,
 
 					__servicesByName: doodad.PROTECTED(  null  ),
 					__servicesById: doodad.PROTECTED(  null  ),
