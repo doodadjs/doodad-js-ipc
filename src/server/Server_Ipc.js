@@ -448,9 +448,7 @@ module.exports = {
 											}, null, this)
 											.catch(newRequest.catchError)
 											.finally(function cleanupRequestPromise() {
-												if (!newRequest.isDestroyed()) {
-													newRequest.destroy();
-												};
+												types.DESTROY(newRequest);
 											}, this);
 									}, null, this)
 									.finally(function cleanupPromise() {
