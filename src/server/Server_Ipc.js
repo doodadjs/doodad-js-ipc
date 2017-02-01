@@ -472,7 +472,7 @@ module.exports = {
 								return this.getSessionFromToken(svcToken)
 									.then(function deleteSessionPromise(session) {
 										session.remove();
-										session.destroy();
+										types.DESTROY(session);
 									});
 							};
 						};
