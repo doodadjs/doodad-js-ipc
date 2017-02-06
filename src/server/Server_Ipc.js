@@ -345,11 +345,11 @@ module.exports = {
 						return services[svcName];
 					}),
 					getServiceFromToken: doodad.PROTECTED(function getServiceFromToken(svcToken) {
-						root.DD_ASSERT && root.DD_ASSERT(types.isObject(svcToken), "Invalid service token.");
-						const services = this.__servicesById;
+						root.DD_ASSERT && root.DD_ASSERT(types.isNothing(svcToken) || types.isObject(svcToken), "Invalid service token.");
 						if (!svcToken) {
 							return null;
 						};
+						const services = this.__servicesById;
 						const id = svcToken.serviceId;
 						if (!types.has(services, id)) {
 							return null;
@@ -437,7 +437,7 @@ module.exports = {
 							.then(function proceedToken(token) {
 								const svc = this.getServiceFromToken(token);
 								if (!svc) {
-									throw new ipc.Error("Invalid service token.");
+									throw new ipc.InvalidRequest("Invalid service token.");
 								};
 								return this.getSessionFromToken(token)
 									.then(function executeRequestPromise(session) {
@@ -451,6 +451,7 @@ module.exports = {
 												types.DESTROY(newRequest);
 											}, this);
 									}, null, this)
+									.catch(newRequest.catchError)
 									.finally(function cleanupPromise() {
 										if (release) {
 											return this.releaseService(request, token);
