@@ -451,7 +451,6 @@ module.exports = {
 												types.DESTROY(newRequest);
 											}, this);
 									}, null, this)
-									.catch(newRequest.catchError)
 									.finally(function cleanupPromise() {
 										if (release) {
 											return this.releaseService(request, token);
