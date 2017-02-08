@@ -104,7 +104,7 @@ module.exports = {
 					session: doodad.PUBLIC(doodad.READ_ONLY(null)),
 					data: doodad.PUBLIC(doodad.READ_ONLY(null)),
 
-					create: doodad.OVERRIDE(function(server, method, /*optional*/args, /*optional*/session) {
+					create: doodad.OVERRIDE(function create(server, method, /*optional*/args, /*optional*/session) {
 						if (root.DD_ASSERT) {
 							root.DD_ASSERT(types._implements(server, ipcInterfaces.IServer), "Invalid server.");
 							root.DD_ASSERT(types.isString(method), "Invalid method.");
