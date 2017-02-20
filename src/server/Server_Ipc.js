@@ -65,7 +65,7 @@ module.exports = {
 					this.superArgs = [message || "Method '~1~' of '~0~' is not callable or doesn't exist.", params];
 				}));
 				
-				ipcExtenders.REGISTER(extenders.Method.$inherit({
+				ipcExtenders.REGISTER([], extenders.Method.$inherit({
 					$TYPE_NAME: "Callable",
 					$TYPE_UUID: '' /*! INJECT('+' + TO_SOURCE(UUID('CallableExtender')), true) */,
 				}));
