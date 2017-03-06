@@ -131,16 +131,10 @@ module.exports = {
 									doodad.trapException(ex);
 								} catch(o) {
 								};
+								throw ex;
 							} else if (this.isDestroyed()) {
-								if (ex.critical) {
+								if (ex.critical || !ex.bubble) {
 									throw ex;
-								} else if (ex.bubble) {
-									// Do nothing
-								} else {
-									try {
-										doodad.trapException(ex);
-									} catch(o) {
-									};
 								};
 							} else {
 								count++;
