@@ -132,7 +132,7 @@ module.exports = {
 								} catch(o) {
 								};
 								throw ex;
-							} else if (this.isDestroyed()) {
+							} else if (_shared.DESTROYED(this)) {
 								if (ex.critical || !ex.bubble) {
 									throw ex;
 								};
