@@ -407,6 +407,7 @@ module.exports = {
 						return this.__getService(request, svcName, options)
 							.then(function(token) {
 								request.data.lastServiceToken = token;
+								return token;
 							});
 					}),
 					
