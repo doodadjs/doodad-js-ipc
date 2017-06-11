@@ -99,26 +99,23 @@ module.exports = {
 					$TYPE_NAME: 'Request',
 					$TYPE_UUID: '' /*! INJECT('+' + TO_SOURCE(UUID('RequestBase')), true) */,
 					
-					method: doodad.PUBLIC(doodad.READ_ONLY(null)),
-					args: doodad.PUBLIC(doodad.READ_ONLY(null)),
 					session: doodad.PUBLIC(doodad.READ_ONLY(null)),
 					data: doodad.PUBLIC(doodad.READ_ONLY(null)),
 
-					create: doodad.OVERRIDE(function create(server, method, /*optional*/args, /*optional*/session) {
+					create: doodad.OVERRIDE(function create(server, /*optional*/session) {
 						if (root.DD_ASSERT) {
 							root.DD_ASSERT(types._implements(server, ipcInterfaces.IServer), "Invalid server.");
-							root.DD_ASSERT(types.isString(method), "Invalid method.");
-							root.DD_ASSERT(types.isNothing(args) || types.isArray(args), "Invalid method arguments.");
-							root.DD_ASSERT(types.isNothing(session) || (session instanceof server.Session), "Invalid session.");
+							root.DD_ASSERT(types.isNothing(session) || types._instanceof(session, server.Session), "Invalid session.");
 						};
+
 						this._super();
+
 						_shared.setAttributes(this, {
 							server: server,
-							method: method,
-							args: args,
-							session : session,
 							data: types.nullObject(),
 						});
+
+						this.setSession(session);
 					}),
 					
 					catchError: doodad.OVERRIDE(function catchError(ex) {
@@ -160,6 +157,14 @@ module.exports = {
 					}),
 
 					respondWithError: doodad.PUBLIC(doodad.ASYNC(doodad.MUST_OVERRIDE())), // function respondWithError(ex)
+
+					setSession: doodad.PUBLIC(function setSession(session) {
+						if (root.DD_ASSERT) {
+							root.DD_ASSERT(types.isNothing(session) || types._instanceof(session, server.Session), "Invalid session.");
+						};
+						
+						_shared.setAttribute(this, 'session', session);
+					}),
 				})));
 
 				// What an object must implement to be an IPC/RPC Service
@@ -175,14 +180,16 @@ module.exports = {
 					// Implement with state-full services. Must listen to "session.onDestroy" to free resources.
 					initSession: doodad.PUBLIC(doodad.NOT_IMPLEMENTED()), // function initSession(session, /*optional*/options)
 					
-					execute: doodad.OVERRIDE(function execute(request) {
+					execute: doodad.OVERRIDE(function execute(request, method, /*optional*/args) {
 						if (root.DD_ASSERT) {
-							root.DD_ASSERT(request instanceof ipc.Request, "Invalid request.");
+							root.DD_ASSERT(types._instanceof(request, ipc.Request), "Invalid request.");
+							root.DD_ASSERT(types.isString(method), "Invalid method name.");
+							root.DD_ASSERT(types.isNothing(args) || types.isArray(args), "Invalid method arguments.");
 						};
-						if (!ipc.isCallable(this[doodad.HostSymbol], request.method)) {
-							throw new ipc.MethodNotCallable(null, [types.getTypeName(this[doodad.HostSymbol]), request.method]);
+						if (!ipc.isCallable(this[doodad.HostSymbol], method)) {
+							throw new ipc.MethodNotCallable(null, [types.getTypeName(this[doodad.HostSymbol]), method]);
 						};
-						return _shared.invoke(this[doodad.HostSymbol], request.method, types.append([request], request.args), _shared.SECRET);
+						return _shared.invoke(this[doodad.HostSymbol], method, types.append([request], args), _shared.SECRET);
 					}),
 				}))));
 				
@@ -267,28 +274,6 @@ module.exports = {
 					}),
 				})));
 				
-				ipc.REGISTER(ipc.Request.$extend(
-				{
-					$TYPE_NAME: 'ServiceManagerRequest',
-					$TYPE_UUID: '' /*! INJECT('+' + TO_SOURCE(UUID('ServiceManagerRequest')), true) */,
-					
-					innerRequest: doodad.PUBLIC(doodad.READ_ONLY(  null  )),
-					
-					create: doodad.OVERRIDE(function create(innerRequest, server, method, /*optional*/args, /*optional*/session) {
-						this._super(server, method, args, session);
-
-						_shared.setAttribute(this, 'innerRequest', innerRequest);
-					}),
-					
-					end: doodad.OVERRIDE(function end(/*optional*/result) {
-						return this.innerRequest.end(result);
-					}),
-
-					respondWithError: doodad.OVERRIDE(function respondWithError(ex) {
-						return this.innerRequest.respondWithError(ex);
-					}),
-				}));
-
 				// What an object must implement to be an IPC/RPC Service Manager
 				ipc.REGISTER(doodad.Object.$extend(
 									ipcInterfaces.IServiceManager,
@@ -306,10 +291,6 @@ module.exports = {
 						
 						this.__servicesByName = {};
 						this.__servicesById = {};
-					}),
-					
-					createManagerRequest: doodad.PROTECTED(function createManagerRequest(request, method, args, session) {
-						return new ipc.ServiceManagerRequest(request, this, method, args, session);
 					}),
 					
 					registerService: doodad.PROTECTED(function registerService(svcName, svc) {
@@ -436,20 +417,23 @@ module.exports = {
 								};
 								return this.getSessionFromToken(token)
 									.then(function executeRequestPromise(session) {
-										const newRequest = this.createManagerRequest(request, method, args, session);
-										return svc.obj.execute(newRequest)
-											.then(function endRequestPromise(result) {
-												return newRequest.end(result);
-											}, null, this)
-											.catch(newRequest.catchError)
-											.finally(function cleanupRequestPromise() {
-												types.DESTROY(newRequest);
-											}, this);
+										request.setSession(session);
+										return svc.obj.execute(request, method, args);
 									}, null, this)
-									.finally(function cleanupPromise() {
+									.nodeify(function cleanupPromise(err, result) {
+										let promise = Promise.resolve();
 										if (release) {
-											return this.releaseService(request, token);
+											promise = promise.then(function() {
+												return this.releaseService(request, token);
+											}, null, this);
 										};
+										return promise.then(function(dummy) {
+											if (err) {
+												throw err;
+											} else {
+												return result;
+											};
+										});
 									}, this);
 							}, null, this);
 					}),
