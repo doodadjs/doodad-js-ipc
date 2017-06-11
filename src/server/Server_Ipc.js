@@ -167,7 +167,7 @@ module.exports = {
 					}),
 				})));
 
-				// What an object must implement to be an IPC/RPC Service
+				// What an object must implement to be an IPC Service
 				ipcMixIns.REGISTER(doodad.ISOLATED(doodad.MIX_IN(doodad.Class.$extend(
 									serverMixIns.Response,
 				{
@@ -274,7 +274,7 @@ module.exports = {
 					}),
 				})));
 				
-				// What an object must implement to be an IPC/RPC Service Manager
+				// What an object must implement to be an IPC Service Manager
 				ipc.REGISTER(doodad.Object.$extend(
 									ipcInterfaces.IServiceManager,
 									ipcInterfaces.IServer,
@@ -285,6 +285,7 @@ module.exports = {
 
 					__servicesByName: doodad.PROTECTED(  null  ),
 					__servicesById: doodad.PROTECTED(  null  ),
+					__serviceInterfaces: doodad.PROTECTED( ipcMixIns.Service ),
 					
 					create: doodad.OVERRIDE(function create() {
 						this._super();
@@ -356,7 +357,7 @@ module.exports = {
 							svc = this.getServiceFromName(svcName);
 						if (!svc) {
 							svc = namespaces.get(svcName);
-							if (!types._implements(svc, ipcMixIns.Service)) {
+							if (!types._implements(svc, this.__serviceInterfaces)) {
 								throw new ipc.InvalidRequest("Unknown service : '~0~'.", [svcName]);
 							};
 							if (types.isType(svc)) {
