@@ -200,9 +200,9 @@ module.exports = {
 					$TYPE_UUID: '' /*! INJECT('+' + TO_SOURCE(UUID('IServiceManagerInterface')), true) */,
 
 					// NOTE: "PUBLIC" to allow in-process call				
-					getService: doodad.PUBLIC(ipc.CALLABLE(doodad.NOT_IMPLEMENTED())), // function(svcName, /*optional*/svcOptions, /*optional*/options)
-					callService: doodad.PUBLIC(ipc.CALLABLE(doodad.NOT_IMPLEMENTED())), // function(svcToken, method, /*optional*/args, /*optional*/options)
-					releaseService: doodad.PUBLIC(ipc.CALLABLE(doodad.NOT_IMPLEMENTED())), // function(svcToken, /*optional*/options)
+					getService: doodad.PUBLIC(ipc.CALLABLE(doodad.ASYNC(doodad.NOT_IMPLEMENTED()))), // function(svcName, /*optional*/svcOptions, /*optional*/options)
+					callService: doodad.PUBLIC(ipc.CALLABLE(doodad.ASYNC(doodad.NOT_IMPLEMENTED()))), // function(svcToken, method, /*optional*/args, /*optional*/options)
+					releaseService: doodad.PUBLIC(ipc.CALLABLE(doodad.ASYNC(doodad.NOT_IMPLEMENTED()))), // function(svcToken, /*optional*/options)
 				})));
 				
 				// What an IPC/RPC Client must implement
@@ -214,7 +214,7 @@ module.exports = {
 					$TYPE_UUID: '' /*! INJECT('+' + TO_SOURCE(UUID('IServiceManagerMixIn')), true) */,
 					
 					connect: doodad.PUBLIC(doodad.MUST_OVERRIDE()), // function connect(/*optional*/options)
-					callMethod: doodad.PUBLIC(doodad.MUST_OVERRIDE()), // function callMethod(method, /*optional*/args, /*optional*/options)
+					callMethod: doodad.PUBLIC(doodad.ASYNC(doodad.MUST_OVERRIDE())), // function callMethod(method, /*optional*/args, /*optional*/options)
 					disconnect: doodad.PUBLIC(doodad.MUST_OVERRIDE()), // function disconnect()
 					
 					getService: doodad.OVERRIDE(function getService(svcName, /*optional*/svcOptions, /*optional*/options) {
