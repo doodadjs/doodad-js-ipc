@@ -298,12 +298,17 @@ module.exports = {
 						const servicesByName = this.__servicesByName,
 							servicesById = this.__servicesById;
 						if (types.has(servicesByName, svcName)) {
-							return false;
+							return servicesByName[svcName];
 						};
-						let id;
+						let count = 5,
+							id;
 						do {
 							id = tools.generateUUID();
-						} while (types.has(servicesById, id));
+							count--;
+						} while ((count > 0) && types.has(servicesById, id));
+						if (count <= 0) {
+							return null;
+						};
 						svc = {
 							id: id,
 							obj: svc,
@@ -365,6 +370,9 @@ module.exports = {
 							};
 							svc = svc.getInterface(ipcMixIns.Service);
 							svc = this.registerService(svcName, svc);
+						};
+						if (!svc) {
+							throw new ipc.Error("Unable to retrieve the service '~0~'.", [svcName]);
 						};
 						if (types.get(options, 'version', 0) !== svc.obj.version) {
 							throw new ipc.InvalidRequest("Invalid version. Service version is '~0~'.", [svc.obj.version]);
