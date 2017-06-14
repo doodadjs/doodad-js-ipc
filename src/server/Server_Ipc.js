@@ -76,7 +76,6 @@ module.exports = {
 						const val = types.unbox(fn);
 						root.DD_ASSERT(types.isNothing(val) || types.isJsFunction(val), "Invalid function.");
 					};
-					//return doodad.RETURNS(types.isSerializable, doodad.ATTRIBUTE(fn, ipcExtenders.Callable));
 					return doodad.ASYNC(doodad.ATTRIBUTE(fn, ipcExtenders.Callable));
 				});
 				
