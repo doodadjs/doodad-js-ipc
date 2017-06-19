@@ -1,11 +1,11 @@
 {
-    "CallableExtender": "b96090cb-3b39-4a5c-ad6b-4d479a368981",
-    "RequestBase": "cc4c6b52-a6de-495f-85d4-ad9dd779decf",
-    "ServiceIsolatedMixIn": "4af47068-12f1-46f1-b4b2-521a907d2fdb",
-    "IServiceManagerInterface": "237e7a55-c33f-4c6f-b1f3-45bb5bbf3ad3",
-    "IServiceManagerMixIn": "ac6fecbc-6085-43cc-b118-0e5728ef4838",
-    "ClientBase": "b46f8abb-f752-4ab7-9478-71732942a396",
-    "IServerInterface": "2da498f0-fcfd-4bcf-99a8-d551c5b85a5a",
-    "ServerBase": "bffa0265-a0e5-4616-9926-85e9be0cade5",
-    "ServiceManager": "f854a448-8fc0-457f-aa82-ebe75623b074"
+    "CallableExtender": "d989198c-bfc2-4883-9512-40e461057567",
+    "RequestBase": "23bba479-f57c-4772-883f-e9f44ddc1457",
+    "ServiceIsolatedMixIn": "5124e7e3-5d99-4ba1-8426-55f3198b355c",
+    "IServiceManagerInterface": "6ce56227-ccfe-4837-a0dd-223320da71bb",
+    "IServiceManagerMixIn": "1538c811-8f9d-4167-9f2e-33ee2a6cd76a",
+    "ClientBase": "a13f56b2-15cb-401e-b4b2-7420a1f34c32",
+    "IServerInterface": "92a6cb86-e86c-48aa-87a9-aa48d2f9707c",
+    "ServerBase": "324478c2-011c-4f85-a3ee-e2ab9de3bba8",
+    "ServiceManager": "1ad16bf8-10a5-48f7-9cb2-1accbd5cf976"
 }
