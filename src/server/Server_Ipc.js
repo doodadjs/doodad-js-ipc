@@ -111,7 +111,7 @@ module.exports = {
 
 						_shared.setAttributes(this, {
 							server: server,
-							data: types.nullObject(),
+							data: tools.nullObject(),
 						});
 
 						this.setSession(session);
@@ -188,7 +188,7 @@ module.exports = {
 						if (!ipc.isCallable(this[doodad.HostSymbol], method)) {
 							throw new ipc.MethodNotCallable(null, [types.getTypeName(this[doodad.HostSymbol]), method]);
 						};
-						return _shared.invoke(this[doodad.HostSymbol], method, types.append([request], args), _shared.SECRET);
+						return _shared.invoke(this[doodad.HostSymbol], method, tools.append([request], args), _shared.SECRET);
 					}),
 				}))));
 				
