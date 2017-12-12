@@ -7,5 +7,8 @@
     "ClientBase": "a13f56b2-15cb-401e-b4b2-7420a1f34c32",
     "IServerInterface": "92a6cb86-e86c-48aa-87a9-aa48d2f9707c",
     "ServerBase": "324478c2-011c-4f85-a3ee-e2ab9de3bba8",
-    "ServiceManager": "1ad16bf8-10a5-48f7-9cb2-1accbd5cf976"
+    "ServiceManager": "1ad16bf8-10a5-48f7-9cb2-1accbd5cf976",
+    "Error": "272495b8-1517-40be-80bb-a99718642564",
+    "InvalidRequest": "b72e22c0-90dd-4b92-b69c-454ddfb01ca3",
+    "MethodNotCallable": "4331208a-9ecc-40c1-bacc-331599b983b4"
 }
