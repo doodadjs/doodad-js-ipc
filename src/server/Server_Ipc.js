@@ -102,6 +102,8 @@ exports.add = function add(DD_MODULES) {
 				session: doodad.PUBLIC(doodad.READ_ONLY(null)),
 				data: doodad.PUBLIC(doodad.READ_ONLY(null)),
 
+				__cancelable: doodad.PROTECTED(null),
+
 				create: doodad.OVERRIDE(function create(server, /*optional*/session) {
 					if (root.DD_ASSERT) {
 						root.DD_ASSERT(types._implements(server, ipcInterfaces.IServer), "Invalid server.");
@@ -165,6 +167,17 @@ exports.add = function add(DD_MODULES) {
 						
 					_shared.setAttribute(this, 'session', session);
 				}),
+
+				isCancelable: doodad.PUBLIC(function isCancelable() {
+					return !!this.__cancelable;
+				}),
+
+				cancel: doodad.PUBLIC(doodad.ASYNC(function cancel() {
+					if (!this.__cancelable) {
+						throw new types.NotAvailable();
+					};
+					return this.__cancelable.cancel();
+				})),
 			})));
 
 			// What an object must implement to be an IPC Service
@@ -181,6 +194,7 @@ exports.add = function add(DD_MODULES) {
 				initSession: doodad.PUBLIC(doodad.NOT_IMPLEMENTED()), // function initSession(session, /*optional*/options)
 					
 				execute: doodad.OVERRIDE(function execute(request, method, /*optional*/args) {
+					const Promise = types.getPromise();
 					if (root.DD_ASSERT) {
 						root.DD_ASSERT(types._instanceof(request, ipc.Request), "Invalid request.");
 						root.DD_ASSERT(types.isString(method), "Invalid method name.");
@@ -189,7 +203,15 @@ exports.add = function add(DD_MODULES) {
 					if (!ipc.isCallable(this[doodad.HostSymbol], method)) {
 						throw new ipc.MethodNotCallable(null, [types.getTypeName(this[doodad.HostSymbol]), method]);
 					};
-					return _shared.invoke(this[doodad.HostSymbol], method, tools.append([request], args), _shared.SECRET);
+					return Promise.resolve(_shared.invoke(this[doodad.HostSymbol], method, tools.append([request], args), _shared.SECRET))
+						.then(function(result) {
+							if (types.isCancelable(result)) {
+								_shared.setAttribute(request, '__cancelable', result, _shared.SECRET);
+								return result.start();
+							} else {
+								return result;
+							};
+						}, null, this);
 				}),
 			}))));
 				
