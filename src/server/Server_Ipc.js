@@ -53,19 +53,38 @@ exports.add = function add(DD_MODULES) {
 			//};
 
 				
-			ipc.REGISTER(types.createErrorType('Error', types.Error, function _super(/*optional*/message, /*optional*/params) {
-				this.bubble = true;
-				return [message || "General IPC error.", params];
-			}, null, null, null, /*! REPLACE_BY(TO_SOURCE(UUID('Error')), true) */ null /*! END_REPLACE() */));
+			ipc.REGISTER(types.Error.$inherit(
+				{
+					$TYPE_NAME: 'Error',
+					$TYPE_UUID: /*! REPLACE_BY(TO_SOURCE(UUID('Error')), true) */ null /*! END_REPLACE() */,
 
-			ipc.REGISTER(types.createErrorType('InvalidRequest', ipc.Error, function _super(/*optional*/message, /*optional*/params) {
-				return [message || "Invalid request.", params];
-			}, null, null, null, /*! REPLACE_BY(TO_SOURCE(UUID('InvalidRequest')), true) */ null /*! END_REPLACE() */));
+					[types.ConstructorSymbol](/*optional*/message, /*optional*/params) {
+						return [message || "General IPC error.", params];
+					},
+				},
+				/*instanceProto*/
+				{
+					bubble: types.NOT_CONFIGURABLE(types.READ_ONLY(true)),
+				}));
 
-			ipc.REGISTER(types.createErrorType('MethodNotCallable', ipc.Error, function _super(/*optional*/message, /*optional*/params) {
-				return [message || "Method '~1~' of '~0~' is not callable or doesn't exist.", params];
-			}, null, null, null, /*! REPLACE_BY(TO_SOURCE(UUID('MethodNotCallable')), true) */ null /*! END_REPLACE() */));
-				
+			ipc.REGISTER(ipc.Error.$inherit({
+				$TYPE_NAME: 'InvalidRequest',
+				$TYPE_UUID: /*! REPLACE_BY(TO_SOURCE(UUID('InvalidRequest')), true) */ null /*! END_REPLACE() */,
+
+				[types.ConstructorSymbol](/*optional*/message, /*optional*/params) {
+					return [message || "Invalid request.", params];
+				},
+			}));
+
+			ipc.REGISTER(ipc.Error.$inherit({
+				$TYPE_NAME: 'MethodNotCallable',
+				$TYPE_UUID: /*! REPLACE_BY(TO_SOURCE(UUID('MethodNotCallable')), true) */ null /*! END_REPLACE() */,
+
+				[types.ConstructorSymbol](/*optional*/message, /*optional*/params) {
+					return [message || "Method '~1~' of '~0~' is not callable or doesn't exist.", params];
+				},
+			}));
+
 			ipcExtenders.REGISTER([], extenders.Method.$inherit({
 				$TYPE_NAME: "Callable",
 				$TYPE_UUID: '' /*! INJECT('+' + TO_SOURCE(UUID('CallableExtender')), true) */,
