@@ -1,5 +1,5 @@
 {
-  "name": "doodad-js-ipc",
+  "name": "@doodad-js/ipc",
   "description": "doodad-js IPC/RPC (alpha)",
   "version": "0.0.0",
   "files": [
