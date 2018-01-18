@@ -37,10 +37,10 @@ exports.add = function add(DD_MODULES) {
 				types = doodad.Types,
 				tools = doodad.Tools,
 				namespaces = doodad.Namespaces,	
-				mixIns = doodad.MixIns,
-				interfaces = doodad.Interfaces,
+				//mixIns = doodad.MixIns,
+				//interfaces = doodad.Interfaces,
 				extenders = doodad.Extenders,
-				io = doodad.IO,
+				//io = doodad.IO,
 				server = doodad.Server,
 				serverMixIns = server.MixIns,
 				ipc = server.Ipc,
@@ -142,12 +142,13 @@ exports.add = function add(DD_MODULES) {
 				catchError: doodad.OVERRIDE(function catchError(ex) {
 					const max = 5; // prevents infinite loop
 					let count = 0;
-					const _catchError = function _catchError(ex) {
+					const _catchError = function __catchError(ex) {
 						if (count >= max) {
 							// Failed to respond with internal error.
 							try {
 								doodad.trapException(ex);
 							} catch(o) {
+								// Do nothing
 							};
 							throw ex;
 						} else if (_shared.DESTROYED(this)) {
@@ -172,6 +173,7 @@ exports.add = function add(DD_MODULES) {
 									.catch(_catchError, this);
 							};
 						};
+						return undefined;
 					};
 
 					return _catchError.call(this, ex);
@@ -399,8 +401,7 @@ exports.add = function add(DD_MODULES) {
 						root.DD_ASSERT(types.isString(svcName), "Invalid service name.");
 						root.DD_ASSERT(types.isNothing(options) || types.isObject(options), "Invalid options.");
 					};
-					let isStateFull,
-						svc = this.getServiceFromName(svcName);
+					let svc = this.getServiceFromName(svcName);
 					if (!svc) {
 						svc = namespaces.get(svcName);
 						if (!types._implements(svc, this.__serviceInterfaces)) {
@@ -505,6 +506,7 @@ exports.add = function add(DD_MODULES) {
 								});
 						};
 					};
+					return undefined;
 				}),
 			}));
 		},
