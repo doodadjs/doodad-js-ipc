@@ -24,6 +24,11 @@
 //	limitations under the License.
 //! END_REPLACE()
 
+//! IF_SET("mjs")
+//! ELSE()
+	"use strict";
+//! END_IF()
+
 exports.add = function add(DD_MODULES) {
 	DD_MODULES = (DD_MODULES || {});
 	DD_MODULES['Doodad.Server.Ipc'] = {
@@ -31,8 +36,6 @@ exports.add = function add(DD_MODULES) {
 		namespaces: ['Interfaces', 'MixIns', 'Extenders'],
 
 		create: function create(root, /*optional*/_options, _shared) {
-			"use strict";
-
 			const doodad = root.Doodad,
 				types = doodad.Types,
 				tools = doodad.Tools,
