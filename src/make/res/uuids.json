@@ -1,14 +1,14 @@
 {
-    "CallableExtender": "d989198c-bfc2-4883-9512-40e461057567",
-    "RequestBase": "23bba479-f57c-4772-883f-e9f44ddc1457",
-    "ServiceIsolatedMixIn": "5124e7e3-5d99-4ba1-8426-55f3198b355c",
-    "IServiceManagerInterface": "6ce56227-ccfe-4837-a0dd-223320da71bb",
-    "IServiceManagerMixIn": "1538c811-8f9d-4167-9f2e-33ee2a6cd76a",
-    "ClientBase": "a13f56b2-15cb-401e-b4b2-7420a1f34c32",
-    "IServerInterface": "92a6cb86-e86c-48aa-87a9-aa48d2f9707c",
-    "ServerBase": "324478c2-011c-4f85-a3ee-e2ab9de3bba8",
-    "ServiceManager": "1ad16bf8-10a5-48f7-9cb2-1accbd5cf976",
-    "Error": "272495b8-1517-40be-80bb-a99718642564",
-    "InvalidRequest": "b72e22c0-90dd-4b92-b69c-454ddfb01ca3",
-    "MethodNotCallable": "4331208a-9ecc-40c1-bacc-331599b983b4"
+    "Error": "312acc76-7b5a-47e3-9ea4-1a11aea10af2",
+    "InvalidRequest": "5598a364-b33a-424f-b67f-39ee0a62e8d3",
+    "MethodNotCallable": "dc915ead-5d57-401c-867b-2e33b80b8164",
+    "CallableExtender": "37102b75-aba5-4de5-8bac-997d9516b56d",
+    "RequestBase": "2670ef7f-ba0f-43be-923f-7b95f6f5971b",
+    "ServiceIsolatedMixIn": "fca73eb5-cc8e-44d1-b6ac-326889026362",
+    "IServiceManagerInterface": "ee7bfe1b-c9b9-4616-bf19-84bd66c0fd0e",
+    "IServiceManagerMixIn": "2e8b9bbd-e645-4aaa-9db4-6b3f5378620c",
+    "ClientBase": "2918389f-ce15-4f02-a359-fac053adcb7b",
+    "IServerInterface": "a0e88877-749d-41d8-8994-b87cdcfc25df",
+    "ServerBase": "664de83b-7377-438c-9f75-4008a4d17994",
+    "ServiceManager": "7c23b072-164b-4279-85c4-63db302764a2"
 }
