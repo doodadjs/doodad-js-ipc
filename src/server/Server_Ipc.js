@@ -134,7 +134,7 @@ exports.add = function add(DD_MODULES) {
 
 					this._super();
 
-					_shared.setAttributes(this, {
+					types.setAttributes(this, {
 						server: server,
 						data: tools.nullObject(),
 					});
@@ -189,7 +189,7 @@ exports.add = function add(DD_MODULES) {
 						root.DD_ASSERT(types.isNothing(session) || types._instanceof(session, server.Session), "Invalid session.");
 					};
 						
-					_shared.setAttribute(this, 'session', session);
+					types.setAttribute(this, 'session', session);
 				}),
 
 				isCancelable: doodad.PUBLIC(function isCancelable() {
@@ -227,10 +227,10 @@ exports.add = function add(DD_MODULES) {
 					if (!ipc.isCallable(this[doodad.HostSymbol], method)) {
 						throw new ipc.MethodNotCallable(null, [types.getTypeName(this[doodad.HostSymbol]), method]);
 					};
-					return Promise.resolve(_shared.invoke(this[doodad.HostSymbol], method, tools.append([request], args), _shared.SECRET))
+					return Promise.resolve(types.invoke(this[doodad.HostSymbol], method, tools.append([request], args), _shared.SECRET))
 						.then(function(result) {
 							if (types.isCancelable(result)) {
-								_shared.setAttribute(request, '__cancelable', result, _shared.SECRET);
+								types.setAttribute(request, '__cancelable', result, null, _shared.SECRET);
 								return result.start();
 							} else {
 								return result;
@@ -316,7 +316,7 @@ exports.add = function add(DD_MODULES) {
 						root.DD_ASSERT(types._implements(service, ipcMixIns.Service), "Invalid service.");
 					};
 					this._super();
-					_shared.setAttribute(this, 'service', service);
+					types.setAttribute(this, 'service', service);
 				}),
 			})));
 				
