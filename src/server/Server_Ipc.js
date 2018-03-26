@@ -29,9 +29,9 @@
 	"use strict";
 //! END_IF()
 
-exports.add = function add(DD_MODULES) {
-	DD_MODULES = (DD_MODULES || {});
-	DD_MODULES['Doodad.Server.Ipc'] = {
+exports.add = function add(modules) {
+	modules = (modules || {});
+	modules['Doodad.Server.Ipc'] = {
 		version: /*! REPLACE_BY(TO_SOURCE(VERSION(MANIFEST("name")))) */ null /*! END_REPLACE()*/,
 		namespaces: ['Interfaces', 'MixIns', 'Extenders'],
 
@@ -224,10 +224,11 @@ exports.add = function add(DD_MODULES) {
 						root.DD_ASSERT(types.isString(method), "Invalid method name.");
 						root.DD_ASSERT(types.isNothing(args) || types.isArray(args), "Invalid method arguments.");
 					};
-					if (!ipc.isCallable(this[doodad.HostSymbol], method)) {
-						throw new ipc.MethodNotCallable(null, [types.getTypeName(this[doodad.HostSymbol]), method]);
+					const obj = this[doodad.HostSymbol];
+					if (!ipc.isCallable(obj, method)) {
+						throw new ipc.MethodNotCallable(null, [types.getTypeName(obj), method]);
 					};
-					return Promise.resolve(types.invoke(this[doodad.HostSymbol], method, tools.append([request], args), _shared.SECRET))
+					return Promise.resolve(types.invoke(obj, method, tools.append([request], args), _shared.SECRET))
 						.then(function(result) {
 							if (types.isCancelable(result)) {
 								types.setAttribute(request, '__cancelable', result, null, _shared.SECRET);
@@ -514,7 +515,7 @@ exports.add = function add(DD_MODULES) {
 			}));
 		},
 	};
-	return DD_MODULES;
+	return modules;
 };
 
 //! END_MODULE()
