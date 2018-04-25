@@ -39,7 +39,7 @@ exports.add = function add(modules) {
 			const doodad = root.Doodad,
 				types = doodad.Types,
 				tools = doodad.Tools,
-				namespaces = doodad.Namespaces,	
+				namespaces = doodad.Namespaces,
 				//mixIns = doodad.MixIns,
 				//interfaces = doodad.Interfaces,
 				extenders = doodad.Extenders,
@@ -50,12 +50,12 @@ exports.add = function add(modules) {
 				ipcInterfaces = ipc.Interfaces,
 				ipcMixIns = ipc.MixIns,
 				ipcExtenders = ipc.Extenders;
-					
-					
+
+
 			//const __Internal__ = {
 			//};
 
-				
+
 			ipc.REGISTER(types.Error.$inherit(
 				{
 					$TYPE_NAME: 'Error',
@@ -101,7 +101,7 @@ exports.add = function add(modules) {
 				};
 				return doodad.ASYNC(doodad.ATTRIBUTE(fn, ipcExtenders.Callable));
 			});
-				
+
 			ipc.ADD('isCallable', function isCallable(obj, name) {
 				const attr = _shared.getAttributeDescriptor(obj, name);
 				if (!attr) {
@@ -114,13 +114,13 @@ exports.add = function add(modules) {
 				const isType = types.isType(obj);
 				return ((isType && extender.isType) || (!isType && extender.isInstance));
 			});
-				
+
 			ipc.REGISTER(doodad.BASE(doodad.Object.$extend(
 								serverMixIns.Request,
 			{
 				$TYPE_NAME: 'Request',
 				$TYPE_UUID: '' /*! INJECT('+' + TO_SOURCE(UUID('RequestBase')), true) */,
-					
+
 				session: doodad.PUBLIC(doodad.READ_ONLY(null)),
 				data: doodad.PUBLIC(doodad.READ_ONLY(null)),
 
@@ -141,7 +141,7 @@ exports.add = function add(modules) {
 
 					this.setSession(session);
 				}),
-					
+
 				catchError: doodad.OVERRIDE(function catchError(ex) {
 					const max = 5; // prevents infinite loop
 					let count = 0;
@@ -188,7 +188,7 @@ exports.add = function add(modules) {
 					if (root.DD_ASSERT) {
 						root.DD_ASSERT(types.isNothing(session) || types._instanceof(session, server.Session), "Invalid session.");
 					};
-						
+
 					types.setAttribute(this, 'session', session);
 				}),
 
@@ -213,10 +213,10 @@ exports.add = function add(modules) {
 
 				// Override this attribute with current version of the service. Client's version and server's version must be the same.
 				version: doodad.PUBLIC(doodad.READ_ONLY( 0 )),
-					
+
 				// Implement with state-full services. Must listen to "session.onDestroy" to free resources.
 				initSession: doodad.PUBLIC(doodad.NOT_IMPLEMENTED()), // function initSession(session, /*optional*/options)
-					
+
 				execute: doodad.OVERRIDE(function execute(request, method, /*optional*/args) {
 					const Promise = types.getPromise();
 					if (root.DD_ASSERT) {
@@ -239,19 +239,19 @@ exports.add = function add(modules) {
 						}, null, this);
 				}),
 			}))));
-				
+
 			// Interface to implement for the ServiceManager at client and server side
 			ipcInterfaces.REGISTER(doodad.INTERFACE(doodad.Class.$extend(
 			{
 				$TYPE_NAME: 'IServiceManager',
 				$TYPE_UUID: '' /*! INJECT('+' + TO_SOURCE(UUID('IServiceManagerInterface')), true) */,
 
-				// NOTE: "PUBLIC" to allow in-process call				
+				// NOTE: "PUBLIC" to allow in-process call
 				getService: doodad.PUBLIC(ipc.CALLABLE(doodad.ASYNC(doodad.NOT_IMPLEMENTED()))), // function(svcName, /*optional*/svcOptions, /*optional*/options)
 				callService: doodad.PUBLIC(ipc.CALLABLE(doodad.ASYNC(doodad.NOT_IMPLEMENTED()))), // function(svcToken, method, /*optional*/args, /*optional*/options)
 				releaseService: doodad.PUBLIC(ipc.CALLABLE(doodad.ASYNC(doodad.NOT_IMPLEMENTED()))), // function(svcToken, /*optional*/options)
 			})));
-				
+
 			// What an IPC/RPC Client must implement
 			// - One IPC client type per IPC server type
 			ipcMixIns.REGISTER(doodad.MIX_IN(doodad.Class.$extend(
@@ -259,11 +259,11 @@ exports.add = function add(modules) {
 			{
 				$TYPE_NAME: 'IClient',
 				$TYPE_UUID: '' /*! INJECT('+' + TO_SOURCE(UUID('IServiceManagerMixIn')), true) */,
-					
+
 				connect: doodad.PUBLIC(doodad.MUST_OVERRIDE()), // function connect(/*optional*/options)
 				callMethod: doodad.PUBLIC(doodad.ASYNC(doodad.MUST_OVERRIDE())), // function callMethod(method, /*optional*/args, /*optional*/options)
 				disconnect: doodad.PUBLIC(doodad.MUST_OVERRIDE()), // function disconnect()
-					
+
 				getService: doodad.OVERRIDE(function getService(svcName, /*optional*/svcOptions, /*optional*/options) {
 					if (root.DD_ASSERT) {
 						root.DD_ASSERT(types.isString(svcName), "Invalid service name.");
@@ -294,24 +294,24 @@ exports.add = function add(modules) {
 				$TYPE_NAME: 'Client',
 				$TYPE_UUID: '' /*! INJECT('+' + TO_SOURCE(UUID('ClientBase')), true) */,
 			})));
-				
+
 			// What an IPC/RPC Server must implement
 			// - One IPC server type per protocol (XML-RPC, JSON-RPC, JSON-WSP, ...)
 			ipcInterfaces.REGISTER(doodad.INTERFACE(doodad.Class.$extend(
 			{
 				$TYPE_NAME: 'IServer',
 				$TYPE_UUID: '' /*! INJECT('+' + TO_SOURCE(UUID('IServerInterface')), true) */,
-					
+
 				service: doodad.PUBLIC(doodad.READ_ONLY(  null  )),  // Can be "ServiceManager" or another service
 			})));
-				
+
 			ipc.REGISTER(doodad.BASE(doodad.Object.$extend(
 								serverMixIns.Server,
 								ipcInterfaces.IServer,
 			{
 				$TYPE_NAME: 'Server',
 				$TYPE_UUID: '' /*! INJECT('+' + TO_SOURCE(UUID('ServerBase')), true) */,
-					
+
 				create: doodad.OVERRIDE(function create(service) {
 					if (root.DD_ASSERT) {
 						root.DD_ASSERT(types._implements(service, ipcMixIns.Service), "Invalid service.");
@@ -320,7 +320,7 @@ exports.add = function add(modules) {
 					types.setAttribute(this, 'service', service);
 				}),
 			})));
-				
+
 			// What an object must implement to be an IPC Service Manager
 			ipc.REGISTER(doodad.Object.$extend(
 								ipcInterfaces.IServiceManager,
@@ -333,14 +333,14 @@ exports.add = function add(modules) {
 				__servicesByName: doodad.PROTECTED(  null  ),
 				__servicesById: doodad.PROTECTED(  null  ),
 				__serviceInterfaces: doodad.PROTECTED( ipcMixIns.Service ),
-					
+
 				create: doodad.OVERRIDE(function create() {
 					this._super();
-						
+
 					this.__servicesByName = {};
 					this.__servicesById = {};
 				}),
-					
+
 				registerService: doodad.PROTECTED(function registerService(svcName, svc) {
 					const servicesByName = this.__servicesByName,
 						servicesById = this.__servicesById;
@@ -390,15 +390,15 @@ exports.add = function add(modules) {
 						sessionId: session && session.id,
 					};
 				}),
-					
+
 				getSessionFromToken: doodad.PROTECTED(doodad.ASYNC(function getSessionFromToken(svcToken) {
 					// TODO: Implement sessions
 				})),
 				createSession: doodad.PROTECTED(doodad.ASYNC(function createSession() {
 					// TODO: Implement sessions
 				})),
-					
-					
+
+
 				__getService: doodad.PROTECTED(doodad.ASYNC(function __getService(request, svcName, /*optional*/options) {
 					const Promise = types.getPromise();
 					if (root.DD_ASSERT) {
@@ -438,7 +438,7 @@ exports.add = function add(modules) {
 							return this.getServiceToken(svc, options, session);
 						}, this);
 				})),
-					
+
 				getService: doodad.OVERRIDE(function getService(request, svcName, /*optional*/options) {
 					return this.__getService(request, svcName, options)
 						.then(function(token) {
@@ -446,7 +446,7 @@ exports.add = function add(modules) {
 							return token;
 						});
 				}),
-					
+
 				callService: doodad.OVERRIDE(function callService(request, svcToken, method, /*optional*/args) {
 					if (root.DD_ASSERT) {
 						root.DD_ASSERT((svcToken === -1) || types.isString(svcToken) || types.isObject(svcToken), "Invalid service token.");
@@ -492,7 +492,7 @@ exports.add = function add(modules) {
 								}, this);
 						}, null, this);
 				}),
-					
+
 				releaseService: doodad.OVERRIDE(function releaseService(request, svcToken) {
 					if (root.DD_ASSERT) {
 						root.DD_ASSERT((svcToken === -1) || types.isObject(svcToken), "Invalid service token.");
