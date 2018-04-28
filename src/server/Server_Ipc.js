@@ -147,11 +147,11 @@ exports.add = function add(modules) {
 						let count = 0;
 						const _catchError = function __catchError(ex) {
 							if (count >= max) {
-							// Failed to respond with internal error.
+								// Failed to respond with internal error.
 								try {
 									doodad.trapException(ex);
 								} catch(o) {
-								// Do nothing
+									// Do nothing
 								};
 								throw ex;
 							} else if (_shared.DESTROYED(this)) {
@@ -164,14 +164,14 @@ exports.add = function add(modules) {
 									return this.respondWithError(ex)
 										.catch(_catchError, this);
 								} else if (types._instanceof(ex, server.EndOfRequest)) {
-								// Do nothing
+									// Do nothing
 								} else if (ex.critical) {
 									throw ex;
 								} else if (ex.bubble) {
 									return this.end()
 										.catch(_catchError, this);
 								} else {
-								// Internal or server error.
+									// Internal or server error.
 									return this.respondWithError(ex)
 										.catch(_catchError, this);
 								};
@@ -392,10 +392,10 @@ exports.add = function add(modules) {
 					}),
 
 					getSessionFromToken: doodad.PROTECTED(doodad.ASYNC(function getSessionFromToken(svcToken) {
-					// TODO: Implement sessions
+						// TODO: Implement sessions
 					})),
 					createSession: doodad.PROTECTED(doodad.ASYNC(function createSession() {
-					// TODO: Implement sessions
+						// TODO: Implement sessions
 					})),
 
 
