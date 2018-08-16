@@ -436,7 +436,7 @@ exports.add = function add(modules) {
 						return sessionPromise
 							.then(function getTokenPromise(session) {
 								return this.getServiceToken(svc, options, session);
-							}, this);
+							}, null, this);
 					})),
 
 					getService: doodad.OVERRIDE(function getService(request, svcName, /*optional*/options) {
@@ -488,7 +488,7 @@ exports.add = function add(modules) {
 											} else {
 												return result;
 											};
-										});
+										}, null, this);
 									}, this);
 							}, null, this);
 					}),
